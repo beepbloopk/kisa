@@ -12,6 +12,17 @@ Built for #hackthekitty 2026.
 
 - Python 3.12
 - Supabase Library
+- fastapi
+- uvicorn
+- jinja2
+- python-dotenv
+- python-multipart
+- supabase
+- httpx
+- pydantic
+- google-generativeai
+
+
 
 Instructions -> 
 
