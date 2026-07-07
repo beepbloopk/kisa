@@ -33,4 +33,5 @@ This project is only a demo version of the actual Kisa web app. The data used is
 
 <img width="1900" height="908" alt="Kisa-mainpage" src="https://github.com/user-attachments/assets/f5b9961a-7521-4a53-86f3-da2f16a21637" />
 <img width="1705" height="912" alt="Kisa-Community" src="https://github.com/user-attachments/assets/bd702f8e-a620-40d7-9833-4edf3fbc8bf3" />
-<img width="1920" height="1080" alt="kisa-livemap" src="https://github.com/user-attachments/assets/a426a546-db45-4f08-8907-b79d1ff8f04e" />
+<img width="1920" height="913" alt="kisa-livemap" src="https://github.com/user-attachments/assets/5e670711-c6f5-44f1-b1bc-965d587fb7f5" />
+
