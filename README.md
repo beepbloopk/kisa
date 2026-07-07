@@ -16,6 +16,10 @@ Built for #hackthekitty 2026.
 4. **Accounts** — sign up, log in, and a single account page with tabs for your profile, your reports, and settings.
 5. **A photo that sticks around** — upload a profile picture once and it's there every time you come back.
 
+> How to run our web app
+
+
+
 > What's next
 
 - A volunteer feature on the community page, so rescues can sign up and actually get involved.
@@ -25,3 +29,4 @@ Built for #hackthekitty 2026.
 
 <img width="1900" height="908" alt="Kisa-mainpage" src="https://github.com/user-attachments/assets/f5b9961a-7521-4a53-86f3-da2f16a21637" />
 <img width="1705" height="912" alt="Kisa-Community" src="https://github.com/user-attachments/assets/bd702f8e-a620-40d7-9833-4edf3fbc8bf3" />
+<img width="1920" height="1080" alt="kisa-livemap" src="https://github.com/user-attachments/assets/a426a546-db45-4f08-8907-b79d1ff8f04e" />
