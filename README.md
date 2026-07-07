@@ -10,7 +10,27 @@ Built for #hackthekitty 2026.
 
 > Pre-requisites you'll need
 
+- Python 3.12
+- Supabase Library
 
+Instructions -> 
+
+1. Create a virtual enviroment 
+
+cd E:\Kisa\kisa\backend
+python -m venv .venv
+.venv\Scripts\activate
+
+2. Install dependencies 
+
+pip install -r requirements.txt
+
+3. Run the server
+
+cd E:\Kisa\kisa\backend
+uvicorn app.main:app --reload
+
+**Open it on : http://127.0.0.1:8000**
 
 > What's in it
 
