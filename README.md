@@ -20,3 +20,8 @@ Built for #hackthekitty 2026.
 
 - A volunteer feature on the community page, so rescues can sign up and actually get involved.
 - A map feature where the user can find nearby local animal help centres and contact them. 
+
+> *Screenshots*
+
+<img width="1900" height="908" alt="Kisa-mainpage" src="https://github.com/user-attachments/assets/f5b9961a-7521-4a53-86f3-da2f16a21637" />
+<img width="1705" height="912" alt="Kisa-Community" src="https://github.com/user-attachments/assets/bd702f8e-a620-40d7-9833-4edf3fbc8bf3" />
