@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Kisa - Our Community, Our Cats</title>
+  <title>Kisa - Your Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -267,6 +267,65 @@
       transform: translateY(-1px);
       box-shadow: var(--shadow-sm);
     }
+
+    /* ACCOUNT DROPDOWN */
+    .account-wrap { position: relative; }
+    .account-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-10);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-2);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .account-btn:hover,
+    .account-btn.open {
+      background: var(--accent-20);
+      color: var(--text);
+    }
+    .account-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 210px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--shadow-md);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+      z-index: 110;
+    }
+    .account-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .account-menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-body);
+      padding: 9px 10px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .account-menu a svg { width: 16px; height: 16px; color: var(--accent-2); flex-shrink: 0; }
+    .account-menu a:hover { background: var(--accent-10); color: var(--text); }
+    .account-menu-divider { height: 1px; background: var(--border); margin: 6px 4px; }
 
     /* HAMBURGER */
     .hamburger {
@@ -890,7 +949,7 @@
 
     /* RESPONSIVE */
     @media (max-width: 900px) {
-      .nav-links, .nav-divider, .btn-nav-ghost, .btn-nav-fill { display: none; }
+      .nav-links, .nav-divider, .btn-nav-ghost, .btn-nav-fill, .account-wrap { display: none; }
       .hamburger { display: flex; }
       section { padding: 64px 0; }
       .hero { padding: 52px 0 64px; }
@@ -924,7 +983,7 @@
     <div class="paw-progress-fill" id="pawProgressFill"></div>
   </div>
   <div class="wrap nav-inner">
-    <a href="/" class="nav-logo" aria-label="Kisa home">
+    <a href="/dashboard" class="nav-logo" aria-label="Kisa home">
       <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
       Kisa
     </a>
@@ -938,8 +997,22 @@
 
     <div class="nav-right">
       <div class="nav-divider" aria-hidden="true"></div>
-      <a href="/login"  class="btn-nav-ghost">Log In</a>
-      <a href="/signup" class="btn-nav-fill">Sign Up</a>
+      <div class="account-wrap">
+        <button class="account-btn" id="accountBtn" type="button"
+                aria-haspopup="true" aria-expanded="false" aria-controls="accountMenu"
+                aria-label="Account menu">
+          <i data-lucide="circle-user-round" style="width:22px;height:22px;"></i>
+        </button>
+        <div class="account-menu" id="accountMenu" role="menu">
+          <a href="/profile" role="menuitem">
+            <i data-lucide="user"></i> My Account
+          </a>
+          <div class="account-menu-divider"></div>
+          <a href="/auth/logout" id="logoutLink" role="menuitem">
+            <i data-lucide="log-out"></i> Log Out
+          </a>
+        </div>
+      </div>
     </div>
 
     <button class="hamburger" id="hamburger"
@@ -952,13 +1025,14 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
-  <a href="/index"><i data-lucide="home" style="width:18px;height:18px;"></i> Home</a>
-  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
-  <a href="/report"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report Sighting</a>
   <a href="/livemap"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
+  <a href="/report"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
+  <a href="/contact"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
   <div class="mob-divider"></div>
-  <a href="/login"><i data-lucide="log-in" style="width:18px;height:18px;"></i> Log In</a>
-  <a href="/signup" class="btn btn-primary" style="margin-top:4px;justify-content:center;">Sign Up Free</a>
+  <a href="/profile"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
+  <div class="mob-divider"></div>
+  <a href="/auth/logout" id="logoutLinkMobile"><i data-lucide="log-out" style="width:18px;height:18px;"></i> Log Out</a>
 </div>
 
 <!-- HERO -->
@@ -977,7 +1051,7 @@
         Kisa connects your community around the cats that live between you. Spot one, log a sighting, trigger a rescue. Together, no one is overlooked.
       </p>
       <div class="hero-ctas">
-        <a href="report.html" class="btn btn-primary">
+        <a href="/report" class="btn btn-primary">
           Report a Sighting
           <span class="btn-arrow">
             <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
@@ -1272,7 +1346,7 @@
         Anyone can contribute. No training, no commitment. Just your eyes and a phone.
       </p>
       <div class="cta-btns">
-        <a href="report.html" class="btn btn-primary">
+        <a href="/report" class="btn btn-primary">
           Report a Sighting
           <span class="btn-arrow">
             <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
@@ -1323,7 +1397,7 @@
         <div class="footer-col-title">Platform</div>
         <ul class="footer-links">
           <li><a href="/community">Cats</a></li>
-          <li><a href="report.html">Report Sighting</a></li>
+          <li><a href="/report">Report Sighting</a></li>
           <li><a href="/livemap">Live Map</a></li>
           <li><a href="/about">About Us</a></li>
         </ul>
@@ -1341,7 +1415,7 @@
         <div class="footer-col-title">Legal</div>
         <ul class="footer-links">
           <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Terms Of Service</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
           <li><a href="/cookies">Cookies</a></li>
         </ul>
       </div>
@@ -1350,7 +1424,6 @@
 
     <div class="footer-bottom">
       <span>&copy; 2026 Kisa. All rights reserved.</span>
-      </div>
     </div>
   </div>
 </footer>
@@ -1496,6 +1569,41 @@
     startAuto();
   })();
 
+  /* Account Dropdown */
+  (function () {
+    var btn  = document.getElementById('accountBtn');
+    var menu = document.getElementById('accountMenu');
+    if (!btn || !menu) return;
+
+    function close() {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    function open() {
+      menu.classList.add('open');
+      btn.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.classList.contains('open') ? close() : open();
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') close();
+    });
+  })();
+
+  /* ── Logout ──
+     GET /auth/logout clears the sb_access_token / sb_refresh_token
+     HttpOnly cookies server-side and redirects to /login. The links
+     point straight at that route (href="/auth/logout"), so no click
+     handler is needed here. */
+
   /* Hamburger */
   (function () {
     var btn  = document.getElementById('hamburger');
@@ -1519,15 +1627,12 @@
       a.addEventListener('click', closeMenu);
     });
 
-    /* Auto-close when the viewport crosses back over the desktop
-       breakpoint (900px) - fixes the menu getting stuck open/fullscreen
-       when the browser is un-minimised or rotated. */
     var desktopMQ = window.matchMedia('(min-width: 901px)');
     var mqHandler = function (e) { if (e.matches) closeMenu(); };
     if (desktopMQ.addEventListener) {
       desktopMQ.addEventListener('change', mqHandler);
     } else {
-      desktopMQ.addListener(mqHandler); // Safari <14 fallback
+      desktopMQ.addListener(mqHandler);
     }
   })();
 
