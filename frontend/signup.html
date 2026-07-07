@@ -491,11 +491,11 @@
     <!-- ── RIGHT: FORM PANEL ── -->
     <div class="auth-panel">
       <div class="auth-panel-top">
-        <a href="index.html" class="auth-logo" aria-label="Kisa home">
+        <a href="/" class="auth-logo" aria-label="Kisa home">
           <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
           <span class="auth-logo-name">Kisa</span>
         </a>
-        <a href="index.html" class="auth-back">
+        <a href="/" class="auth-back">
           <i data-lucide="arrow-left" style="width:14px;height:14px;"></i>
           Back to home
         </a>
@@ -518,7 +518,7 @@
 
         <div class="divider">or sign up with email</div>
 
-        <form id="signupForm" novalidate autocomplete="on">
+        <form id="signupForm" method="POST" action="/auth/signup" autocomplete="on" >
           <div class="form-group">
             <label class="form-label" for="displayName">Display name</label>
             <input type="text" id="displayName" name="displayName" class="form-input" placeholder="How the community knows you" autocomplete="name" aria-describedby="nameErr">
@@ -545,7 +545,7 @@
           <div class="form-group" style="margin-bottom: 20px;">
             <label class="form-label" for="confirmPassword">Confirm password</label>
             <div class="pw-wrap">
-              <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Repeat your password" autocomplete="new-password" aria-describedby="confirmErr">
+              <input type="password" id="confirmPassword" name="confirm_password" class="form-input" placeholder="Repeat your password" autocomplete="new-password" aria-describedby="confirmErr">
               <button type="button" class="pw-toggle" id="toggleConfirm" aria-label="Show or hide confirm password">
                 <i data-lucide="eye" style="width:16px;height:16px;"></i>
               </button>

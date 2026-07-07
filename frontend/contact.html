@@ -583,15 +583,15 @@
     <div class="paw-progress-fill" id="pawProgressFill"></div>
   </div>
   <div class="wrap nav-inner">
-    <a href="index.html" class="nav-logo" aria-label="Kisa home">
+    <a href="/" class="nav-logo" aria-label="Kisa home">
       <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
       Kisa
     </a>
     <ul class="nav-links">
-      <li><a href="/map">Live Map</a></li>
-      <li><a href="/cats">Cats</a></li>
-      <li><a href="report.html">Report a Sighting</a></li>
-      <li><a href="contact.html" class="active">Contact Us</a></li>
+      <li><a href="/livemap">Live Map</a></li>
+      <li><a href="/community">Cats</a></li>
+      <li><a href="/report">Report a Sighting</a></li>
+      <li><a href="/contact" class="active">Contact Us</a></li>
     </ul>
     <div class="nav-right">
       <div class="nav-divider" aria-hidden="true"></div>
@@ -622,12 +622,12 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
-  <a href="/map"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
-  <a href="/cats"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
-  <a href="report.html"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
-  <a href="contact.html"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
+  <a href="/livemap"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
+  <a href="/report"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
+  <a href="/contact"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
   <div class="mob-divider"></div>
-  <a href="profile.html"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
+  <a href="/profile"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
   <div class="mob-divider"></div>
   <a href="#" id="logoutLinkMobile"><i data-lucide="log-out" style="width:18px;height:18px;"></i> Log Out</a>
 </div>
@@ -847,7 +847,7 @@
                   <i data-lucide="send" style="width:15px;height:15px;"></i>
                 </span>
               </button>
-              <a href="index.html" class="btn btn-outline">Cancel</a>
+              <a href="/index" class="btn btn-outline">Cancel</a>
             </div>
             <p style="font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.6;">
               By submitting this form you agree to our
@@ -873,7 +873,7 @@
           <!-- Filled by JS -->
         </div>
         <div class="success-actions">
-          <a href="index.html" class="btn btn-primary">
+          <a href="/index" class="btn btn-primary">
             Back to Home
             <span class="btn-arrow">
               <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
@@ -970,9 +970,9 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-links">
-          <li><a href="/cats">Cats</a></li>
+          <li><a href="/community">Cats</a></li>
           <li><a href="report.html">Report Sighting</a></li>
-          <li><a href="/map">Live Map</a></li>
+          <li><a href="/livemap">Live Map</a></li>
           <li><a href="/about">About Us</a></li>
         </ul>
       </div>
@@ -981,7 +981,7 @@
         <div class="footer-col-title">Community</div>
         <ul class="footer-links">
           <li><a href="/faq">FAQ</a></li>
-          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="/contact">Contact Us</a></li>
         </ul>
       </div>
 
@@ -1140,7 +1140,7 @@
         if (!el) return;
         el.addEventListener('click', function (e) {
           e.preventDefault();
-          window.location.href = 'index.html';
+          window.location.href = '/index';
         });
       });
   })();
@@ -1418,3 +1418,4 @@
 
 </body>
 </html>
+

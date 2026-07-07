@@ -433,7 +433,7 @@
         <h1 class="auth-heading">Log in to Kisa</h1>
         <p class="auth-subtext">Your community and cats are waiting for you.</p>
 
-        <form id="loginForm" novalidate autocomplete="on">
+        <form id="loginForm" method="POST" action="/auth/login" autocomplete="on" >
 
           <div class="form-group">
             <label class="form-label" for="email">Email address</label>
@@ -552,14 +552,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ── Forgot password stub ── */
   document.getElementById('forgotLink').addEventListener('click', function (e) {
-    e.preventDefault();
+    
     showToast('Password reset coming soon.');
     // TODO: Firebase — firebase.auth().sendPasswordResetEmail(email)
   });
 
   /* ── Form submit ── */
   document.getElementById('loginForm').addEventListener('submit', function (e) {
-    e.preventDefault();
+    
     var valid = true;
 
     var email    = document.getElementById('email').value.trim();
