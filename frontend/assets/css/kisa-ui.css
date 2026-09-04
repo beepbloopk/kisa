@@ -215,3 +215,103 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* ---------------------------------------------------------------
+   7. Auth state in the navbar
+
+   The `hidden` attribute only works through the browser's default
+   `[hidden] { display: none }` rule, which ANY inline or class display
+   value outranks. Setting el.hidden = true on a flex container did
+   nothing, so the signed-out buttons stayed visible next to the
+   signed-in account menu. This makes hidden win everywhere.
+   --------------------------------------------------------------- */
+[hidden] {
+  display: none !important;
+}
+
+.kisa-auth-out {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kisa-account-name {
+  padding: 10px 14px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.kisa-mobile-who {
+  padding: 14px 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* ---------------------------------------------------------------
+   8. Account menu
+
+   index.html never had an account menu, so it carried none of this
+   styling. Once the navbar started injecting the menu for signed-in
+   visitors, the home page rendered it as a flat unstyled list of
+   links sitting in the navbar, permanently open. Shared here so
+   every page styles it the same way.
+   --------------------------------------------------------------- */
+.account-wrap { position: relative;}
+.account-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-10);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-2);
+      cursor: pointer;
+      transition: all 0.18s;}
+.account-btn.open {
+      background: var(--accent-20);
+      color: var(--text);}
+.account-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 210px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--shadow-md);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+      z-index: 110;}
+.account-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);}
+.account-menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-body);
+      padding: 9px 10px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;}
+.account-menu a svg { width: 16px; height: 16px; color: var(--accent-2); flex-shrink: 0;}
+.account-menu a:hover { background: var(--accent-10); color: var(--text);}
+.account-menu-divider { height: 1px; background: var(--border); margin: 6px 4px;}

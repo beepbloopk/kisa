@@ -19,6 +19,10 @@
   /* Pages that make no sense signed out. Sends you to login and back. */
   var PROTECTED = ['profile.html', 'dashboard.html'];
 
+  /* The reverse: showing a login form to someone already signed in is just
+     confusing, and submitting it would sign them in as themselves again. */
+  var AUTH_PAGES = ['login.html', 'signup.html'];
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -56,7 +60,6 @@
       var existing = navRight.querySelectorAll('.btn-nav-ghost, .btn-nav-fill');
       out = document.createElement('div');
       out.className = 'kisa-auth-out';
-      out.style.cssText = 'display:flex;align-items:center;gap:8px;';
       if (existing.length) {
         navRight.insertBefore(out, existing[0]);
         Array.prototype.forEach.call(existing, function (el) { out.appendChild(el); });
@@ -122,10 +125,6 @@
     if (!row) {
       row = document.createElement('div');
       row.className = 'kisa-account-name';
-      row.style.cssText = 'padding:10px 14px 8px;font-size:12px;font-weight:600;' +
-                          'color:var(--text-2);border-bottom:1px solid var(--border);' +
-                          'margin-bottom:4px;white-space:nowrap;overflow:hidden;' +
-                          'text-overflow:ellipsis;max-width:220px;';
       menu.insertBefore(row, menu.firstChild);
     }
     /* textContent, never innerHTML: display_name is user supplied. */
@@ -155,7 +154,6 @@
       if (!who) {
         who = document.createElement('div');
         who.className = 'kisa-mobile-who';
-        who.style.cssText = 'padding:14px 4px 6px;font-size:12px;font-weight:600;color:var(--text-2);';
         menu.insertBefore(who, menu.firstChild);
       }
       who.textContent = 'Signed in as ' + name;
@@ -214,9 +212,13 @@
   }
 
   function guard(user) {
-    if (user) return;
-    if (PROTECTED.indexOf(currentPage()) === -1) return;
-    location.replace('login.html?next=' + encodeURIComponent(currentPage()));
+    var page = currentPage();
+    if (user) {
+      if (AUTH_PAGES.indexOf(page) !== -1) location.replace('dashboard.html');
+      return;
+    }
+    if (PROTECTED.indexOf(page) === -1) return;
+    location.replace('login.html?next=' + encodeURIComponent(page));
   }
 
   function start() {
