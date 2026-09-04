@@ -553,6 +553,10 @@
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js"></script>
+  <script src="assets/js/kisa-store.js"></script>
+  <script src="assets/js/kisa-auth-ui.js" defer></script>
 </head>
 <body>
 
@@ -793,17 +797,6 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   })();
 
-  /* ── Logout stub ── */
-  /* TODO: Firebase — firebase.auth().signOut().then(() => window.location.href = '/login') */
-  (function () {
-    [document.getElementById('logoutLink'), document.getElementById('logoutLinkMobile')].forEach(function (el) {
-      if (!el) return;
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        window.location.href = 'index.html';
-      });
-    });
-  })();
 
   /* ── Hamburger ── */
   (function () {

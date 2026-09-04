@@ -743,6 +743,10 @@
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js"></script>
+  <script src="assets/js/kisa-store.js"></script>
+  <script src="assets/js/kisa-auth-ui.js" defer></script>
 </head>
 <body>
 
@@ -1596,18 +1600,6 @@
     });
   })();
 
-  /* Log Out — stub, no auth wired yet */
-  /* TODO: Firebase — firebase.auth().signOut().then(() => window.location.href = '/login') */
-  (function () {
-    var links = [document.getElementById('logoutLink'), document.getElementById('logoutLinkMobile')];
-    links.forEach(function (el) {
-      if (!el) return;
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        window.location.href = 'index.html';
-      });
-    });
-  })();
 
   /* ── Form validation & submission ── */
   (function () {

@@ -633,6 +633,10 @@
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js"></script>
+  <script src="assets/js/kisa-store.js"></script>
+  <script src="assets/js/kisa-auth-ui.js" defer></script>
 </head>
 <body>
 
@@ -1346,16 +1350,6 @@
       });
     }
 
-    /* ── Logout ── */
-    [document.getElementById('logoutLink'), document.getElementById('logoutLinkMobile')].forEach(function (el) {
-      if (!el) return;
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        localStorage.removeItem('kisa_user');
-        sessionStorage.removeItem('kisa_logged_in');
-        window.location.href = 'index.html';
-      });
-    });
   });
 
   /* ── Like toggle ── */

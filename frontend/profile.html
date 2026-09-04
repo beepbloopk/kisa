@@ -916,6 +916,10 @@
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js"></script>
+  <script src="assets/js/kisa-store.js"></script>
+  <script src="assets/js/kisa-auth-ui.js" defer></script>
 </head>
 <body>
 
@@ -1622,15 +1626,6 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   })();
 
-  /* Terminate layout session routing definitions */
-  ['logoutLink', 'logoutLinkMobile', 'logoutSidebar'].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.href = 'index.html';
-    });
-  });
 
   /* Sidebar configuration drawer toggling execution sequence */
   (function () {
