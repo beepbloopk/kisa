@@ -445,6 +445,9 @@
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js"></script>
+  <script src="assets/js/kisa-store.js"></script>
 </head>
 <body>
 
@@ -669,19 +672,49 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!valid) return;
 
     var btn = document.getElementById('signupBtn');
-    btn.disabled = true;
-    btn.textContent = 'Creating account…';
-    setTimeout(function () {
+    var reset = function () {
       btn.disabled = false;
       btn.innerHTML = '<i data-lucide="user-plus" style="width:16px;height:16px;"></i> Create account';
-      lucide.createIcons();
-      showToast('Firebase not yet connected.');
-    }, 1200);
+      if (window.lucide) lucide.createIcons();
+    };
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    /* `full_name` is the key the handle_new_user trigger reads to fill
+       profiles.display_name, which is NOT NULL. Renaming it breaks signup. */
+    KisaStore.auth.signUp(email, pw, name)
+      .then(function (res) {
+        if (res.needsConfirmation) {
+          /* Email confirmation is currently off, so this branch is unused —
+             but it exists so turning confirmation on doesn't break signup. */
+          btn.textContent = 'Check your email';
+          showToast('Almost there — confirm your email address to finish.');
+          return;
+        }
+        btn.textContent = 'Welcome to Kisa!';
+        location.href = 'dashboard.html';
+      })
+      .catch(function (err) {
+        reset();
+        var m = err.message || '';
+        if (/already exists/i.test(m)) {
+          setError('email', 'emailErr', 'An account with that email already exists.');
+        } else if (/password/i.test(m)) {
+          setError('password', 'passwordErr', m);
+        } else {
+          showToast(m);
+        }
+      });
   });
 
   /* ── Google OAuth stub ── */
   document.getElementById('googleBtn').addEventListener('click', function () {
-    showToast('Google sign-up coming soon.');
+    KisaStore.client().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: location.origin + '/dashboard.html' }
+    }).then(function (r) {
+      if (r.error) showToast('Google sign-up isn’t set up yet — use your email and password.');
+    });
   });
 
   /* ── Paw cursor trail ── */
