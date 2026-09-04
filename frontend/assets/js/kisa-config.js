@@ -1,4 +1,4 @@
-/* Kisa — Supabase connection details.
+/* Kisa: Supabase connection details.
  *
  * These values are PUBLIC by design. The publishable key is not a password:
  * it identifies the project and grants the `anon` Postgres role, and
@@ -6,7 +6,7 @@
  * policies on the database. It ships in the browser on every Supabase site.
  *
  * What must NEVER go in this file (or anywhere in this repo) is the
- * `service_role` / secret key — that one bypasses every RLS policy.
+ * `service_role` / secret key. That one bypasses every RLS policy.
  */
 window.KISA_CONFIG = {
   supabaseUrl: 'https://oprpcgjzeuuyjrazjmbs.supabase.co',

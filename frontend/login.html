@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="color-scheme" content="light dark">
-  <title>Log In — Kisa</title>
+  <title>Log In - Kisa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -410,7 +410,7 @@
         </div>
       </div>
 
-      <!-- Tagline — no fake data -->
+      <!-- Tagline, no fake data -->
       <div class="visual-tagline">
         <h2>Our community,<br>our cats, always<br>connected with love.</h2>
         <p>Join neighbours tracking and caring for local strays together.</p>
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function () {
     clearError('email', 'emailErr');
     KisaStore.auth.sendPasswordReset(email, location.origin + '/login.html')
       .then(function () {
-        /* Deliberately the same message whether or not the account exists —
+        /* Deliberately the same message whether or not the account exists -
            otherwise this becomes a way to test which emails are registered. */
         showToast('If that email has an account, a reset link is on its way.');
       })
@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function () {
       provider: 'google',
       options: { redirectTo: location.origin + '/dashboard.html' }
     }).then(function (r) {
-      if (r.error) showToast('Google sign-in isn’t set up yet — use your email and password.');
+      if (r.error) showToast('Google sign-in isn’t set up yet. Use your email and password.');
     });
   });
 

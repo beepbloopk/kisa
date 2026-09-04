@@ -1,4 +1,4 @@
-/* Kisa - shared legal / informational modal (About, Privacy, Terms, FAQ, Cookies).
+/* Kisa: shared legal and informational modal (About, Privacy, Terms, FAQ, Cookies).
    Pair with assets/css/kisa-modal.css. Injects its own markup; no per-page HTML needed.
    Any <a href="/about|/privacy|/terms|/faq|/cookies"> on the page opens it. */
 (function () {
@@ -29,19 +29,19 @@
       title: 'About Kisa',
       html: `
         <h3>Why Kisa Exists</h3>
-        <p>Most neighbourhoods have the same handful of stray cats — and the same handful of people quietly looking after them. Someone leaves food out. Someone else knows the cat has been limping for a week. Usually, none of them know the others exist.</p>
+        <p>Most neighbourhoods have the same handful of stray cats, and the same handful of people quietly looking after them. Someone leaves food out. Someone else knows the cat has been limping for a week. Usually, none of them know the others exist.</p>
         <p>Kisa gives that scattered care one shared place to live. Spot a cat, log a sighting, and it builds into a living profile the whole street can see.</p>
         <h3>How It Works</h3>
         <ul>
-          <li><strong>Report a sighting</strong> — pin a location, add a photo, note how the cat looked.</li>
-          <li><strong>Watch a profile grow</strong> — repeat sightings gather into one history per cat.</li>
-          <li><strong>Raise an SOS</strong> — mark a cat as an emergency and nearby volunteers are alerted first.</li>
-          <li><strong>Look after them together</strong> — like, comment, and flag when you have taken a cat in.</li>
+          <li><strong>Report a sighting</strong>: pin a location, add a photo, note how the cat looked.</li>
+          <li><strong>Watch a profile grow</strong>: repeat sightings gather into one history per cat.</li>
+          <li><strong>Raise an SOS</strong>: mark a cat as an emergency and nearby volunteers are alerted first.</li>
+          <li><strong>Look after them together</strong>: like, comment, and flag when you have taken a cat in.</li>
         </ul>
         <h3>Who We Are</h3>
         <p>Kisa was built for #hackthekitty 2026 by people who kept meeting the same cats on the same streets and wanted somewhere to write it down. It is a community project, and it is better the more neighbours join in.</p>
         <h3>Get In Touch</h3>
-        <p>Questions, ideas, or a bug to report? Reach us at <strong>hello@kisa.app</strong>, or use the contact page — we read every message.</p>
+        <p>Questions, ideas, or a bug to report? Reach us at <strong>hello@kisa.app</strong>, or use the contact page, we read every message.</p>
       `
     },
     privacy: {

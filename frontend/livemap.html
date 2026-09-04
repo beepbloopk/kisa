@@ -126,7 +126,7 @@
     .nav-right { display:flex; align-items:center; gap:6px; }
     .nav-divider { width:1px; height:18px; background:var(--border); margin:0 6px; }
 
-    /* Account button — icon OR dynamic profile picture */
+    /* Account button, icon OR dynamic profile picture */
     .account-wrap { position: relative; }
     .account-btn {
       width:36px; height:36px; border-radius:50%;
@@ -659,12 +659,12 @@
           <div class="map-stage" id="mapStage" role="img" aria-label="Map of reported cat sightings in the community">
             <div class="map-grid-bg" aria-hidden="true"></div>
             <div class="map-roads-bg" aria-hidden="true"></div>
-            <div class="map-caption">Map integration — coming soon</div>
+            <div class="map-caption">Map integration coming soon</div>
             </div>
         </div>
 
         <div class="map-legend">
-          <div class="legend-item"><span class="legend-swatch sos"></span> SOS — urgent</div>
+          <div class="legend-item"><span class="legend-swatch sos"></span> SOS urgent</div>
           <div class="legend-item"><span class="legend-swatch needs-care"></span> Needs Care</div>
           <div class="legend-item"><span class="legend-swatch safe"></span> Safe</div>
         </div>
@@ -772,13 +772,20 @@
 
   /* ── Dynamic profile picture (kisa_avatar, matches profile.html) ── */
   (function () {
+/* Only accept a real image data URL here. Nothing else should ever have
+     been written to this key, so anything else means the value was tampered
+     with and is not worth rendering. */
+  function isImageDataUrl(v) {
+    return typeof v === 'string' && /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+  }
+
     var AVATAR_KEY = 'kisa_avatar';
     var navPfp = document.getElementById('navPfp');
     var navFallback = document.getElementById('navIconFallback');
     if (!navPfp || !navFallback) return;
     var stored = null;
     try { stored = localStorage.getItem(AVATAR_KEY); } catch (e) {}
-    if (stored) {
+    if (isImageDataUrl(stored)) {
       navPfp.src = stored;
       navPfp.classList.add('loaded');
       navFallback.classList.add('hidden');
@@ -829,7 +836,7 @@
   })();
 
   /* ══════════════════════════════════════
-     LIVE MAP — reports data, rendering, filtering
+     LIVE MAP, reports data, rendering, filtering
      No fabricated stats: this mirrors the sightings
      already reflected in this project's community feed.
   ══════════════════════════════════════ */
@@ -862,7 +869,7 @@
     var reportsSummary = document.getElementById('reportsSummary');
 
     /* Build a <i data-lucide="..."> element for a fixed, internally-defined icon name.
-       Never pass user-supplied strings here — icon names always come from STATUS_ICON. */
+       Never pass user-supplied strings here. Icon names always come from STATUS_ICON. */
     function iconEl(name) {
       var i = document.createElement('i');
       i.setAttribute('data-lucide', name);
@@ -872,7 +879,7 @@
     /* SECURITY: report fields (name, area, note, initials) will come from
        user-submitted sighting reports once Firebase is wired in (see TODOs).
        Every one of those fields is untrusted input, so it is written with
-       textContent / DOM node creation below — never innerHTML — to rule out
+       textContent and DOM node creation below, never innerHTML, to rule out
        stored XSS regardless of what a submitted report contains. */
 
     /* Render map pins */
@@ -900,7 +907,7 @@
       mapStage.appendChild(pin);
     });
 
-    /* Sort: SOS first, then Needs Care, then Safe — most recent within each group */
+    /* Sort: SOS first, then Needs Care, then Safe. Most recent within each group. */
     var sorted = REPORTS.slice().sort(function (a, b) {
       if (STATUS_ORDER[a.status] !== STATUS_ORDER[b.status]) return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
       return a.minutesAgo - b.minutesAgo;

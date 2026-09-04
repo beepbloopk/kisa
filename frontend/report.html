@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Kisa — Report a Sighting</title>
+  <title>Kisa - Report a Sighting</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -877,7 +877,7 @@
                 <div class="upload-text">
                   Drag &amp; drop a photo or <span class="upload-link">browse files</span>
                 </div>
-                <div class="upload-sub">JPG, PNG, WEBP — up to 10 MB</div>
+                <div class="upload-sub">JPG, PNG, WEBP, up to 10 MB</div>
               </div>
               <!-- Preview state -->
               <div class="upload-preview-wrap" id="uploadPreviewWrap">
@@ -943,12 +943,12 @@
               <div class="map-prompt">
                 <i data-lucide="map-pin"></i>
                 <span class="map-prompt-label">Click to drop a pin</span>
-                <span class="map-prompt-sub">Map integration — coming soon</span>
+                <span class="map-prompt-sub">Map integration coming soon</span>
               </div>
               <div class="map-pin-dropped">
                 <i data-lucide="map-pin"></i>
                 <span class="map-pin-dropped-label">Pin dropped</span>
-                <span class="map-pin-dropped-sub">Location recorded — click to reposition</span>
+                <span class="map-pin-dropped-sub">Location recorded. Click to reposition</span>
               </div>
             </div>
           </div>
@@ -995,7 +995,7 @@
               Please select the cat's condition.
             </div>
 
-            <!-- SOS warning — shown on Emergency selection -->
+            <!-- SOS warning, shown on Emergency selection -->
             <div class="sos-warn" id="sosWarning">
               <div class="sos-warn-icon">
                 <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i>
@@ -1004,7 +1004,7 @@
                 <div class="sos-warn-title">Emergency SOS will be triggered</div>
                 <p class="sos-warn-body">
                   Nearby volunteers and rescue groups will be notified immediately.
-                  Only use this if the cat is in immediate danger — injured, trapped,
+                  Only use this if the cat is in immediate danger: injured, trapped,
                   or in severe distress.
                 </p>
                 <div class="sos-pulse-row">
@@ -1087,7 +1087,7 @@
             <div class="form-group">
               <label class="form-label" for="notes">Description</label>
               <textarea class="form-textarea form-input" id="notes" name="notes"
-                        placeholder="Any detail that helps — distinctive features, exact spot, whether you've seen them before…"></textarea>
+                        placeholder="Any detail that helps: distinctive features, exact spot, whether you've seen them before…"></textarea>
             </div>
 
             <div class="form-group">
@@ -1180,7 +1180,7 @@
         <div class="info-card-title">Community Verified</div>
         <p class="info-card-desc">
           Your sighting is logged to a shared, transparent record. Other members
-          can confirm, correct, or add detail to what you've reported — building
+          can confirm, correct, or add detail to what you've reported, building
           accuracy over time.
         </p>
       </div>
@@ -1189,7 +1189,7 @@
 
         <div class="info-card-title">Builds Cat Profiles</div>
         <p class="info-card-desc">
-          Every report automatically contributes to the cat's living profile —
+          Every report automatically contributes to the cat's living profile -
           adding to their location history, health timeline, and community
           description. No one person manages it all.
         </p>
@@ -1548,7 +1548,7 @@
             })
             .catch(function () {
               input.value = lat + ', ' + lng;
-              hint.textContent = '📍 Coordinates captured — address lookup unavailable.';
+              hint.textContent = '📍 Coordinates captured. Address lookup unavailable.';
               hint.style.display = 'block';
             })
             .finally(function () {
@@ -1559,7 +1559,7 @@
         },
         function (err) {
           hint.textContent = err.code === 1
-            ? 'Location access denied — please enter manually.'
+            ? 'Location access denied. Please enter manually.'
             : 'Could not determine location. Please enter manually.';
           hint.style.display = 'block';
           btn.classList.remove('detecting');
@@ -1653,7 +1653,7 @@
     }
 
     function formatDatetime(val) {
-      if (!val) return '—';
+      if (!val) return 'Not given';
       var d = new Date(val);
       return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
         + ' at ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
@@ -1677,7 +1677,7 @@
 
     function buildSummary(data) {
       var rows = [
-        { label: 'Location', val: data.location || '—' },
+        { label: 'Location', val: data.location || 'Not given' },
         { label: 'Date & Time', val: formatDatetime(data.datetime) },
         { label: 'Condition', val: statusLabel(data.status) },
       ];

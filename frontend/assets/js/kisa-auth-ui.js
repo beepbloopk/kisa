@@ -1,4 +1,4 @@
-/* Kisa - shared auth state for the navigation bar.
+/* Kisa: shared auth state for the navigation bar.
  *
  * Before this existed, index.html always showed "Log In / Sign Up" and every
  * other page always showed an avatar and a "Log Out" menu, regardless of

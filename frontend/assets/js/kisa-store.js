@@ -1,4 +1,4 @@
-/* Kisa — data layer.
+/* Kisa: data layer.
  *
  * Every page talks to Supabase through this file and nothing else, so the
  * column names and query shapes live in one place. Load order matters:
@@ -10,7 +10,7 @@
  * Names here mirror the live database exactly. Notable traps, all of which
  * cost a failed insert to discover:
  *   - sightings.condition, not `status`
- *   - sightings.location is geography NOT NULL — a report cannot be saved
+ *   - sightings.location is geography NOT NULL, a report cannot be saved
  *     without real coordinates
  *   - sighted_date (date) and sighted_time (time) are separate columns
  *   - age_group and match_status are NOT NULL with CHECK constraints
@@ -26,7 +26,7 @@
   function sb() {
     if (client) return client;
     if (!global.supabase || !global.supabase.createClient) {
-      throw new Error('supabase-js has not loaded — check the <script> order.');
+      throw new Error('supabase-js has not loaded, check the <script> order.');
     }
     if (!global.KISA_CONFIG || !global.KISA_CONFIG.supabaseUrl) {
       throw new Error('kisa-config.js has not loaded.');
@@ -47,7 +47,7 @@
     var code = error.code || '';
 
     if (/Invalid login credentials/i.test(msg)) return 'That email and password don’t match. Please try again.';
-    if (/Email not confirmed/i.test(msg))       return 'Please confirm your email address first — check your inbox.';
+    if (/Email not confirmed/i.test(msg))       return 'Please confirm your email address first, check your inbox.';
     if (/User already registered/i.test(msg) || code === '23505') return 'An account with that email already exists.';
     if (/Password should be at least/i.test(msg)) return 'Please choose a password of at least 6 characters.';
     if (/rate limit|too many/i.test(msg))       return 'Too many attempts. Please wait a moment and try again.';
@@ -64,7 +64,7 @@
   }
 
   /* The INSERT policies check auth.uid() against the row's owner column, and
-     those columns are nullable with no default — so an insert that omits them
+     those columns are nullable with no default, so an insert that omits them
      writes NULL and is rejected by RLS with a confusing 42501. Every create()
      below resolves the current user id first and sets it explicitly. */
   function requireUserId() {
@@ -79,7 +79,7 @@
   var Auth = {
     /* The trigger handle_new_user reads raw_user_meta_data->>'full_name'
        to populate profiles.display_name, which is NOT NULL. That key name
-       is load-bearing — do not rename it. */
+       is load-bearing, do not rename it. */
     signUp: function (email, password, fullName) {
       return sb().auth.signUp({
         email: email,
@@ -149,7 +149,7 @@
 
     /* Only display_name, avatar_url and phone exist on this table. The
        profile form also collects a bio and location, which have nowhere to
-       go yet — see updateExtras below. */
+       go yet, see updateExtras below. */
     update: function (userId, fields) {
       var allowed = {};
       ['display_name', 'avatar_url', 'phone'].forEach(function (k) {

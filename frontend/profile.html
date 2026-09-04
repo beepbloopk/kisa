@@ -147,7 +147,7 @@
     .nav-right { display: flex; align-items: center; gap: 6px; }
     .nav-divider { width: 1px; height: 18px; background: var(--border); margin: 0 6px; }
 
-    /* ACCOUNT BUTTON — shows icon OR pfp */
+    /* ACCOUNT BUTTON, shows icon OR pfp */
     .account-wrap { position: relative; }
     .account-btn {
       width: 36px;
@@ -1063,7 +1063,7 @@
                   </div>
                   <div class="field">
                     <label for="bio">Bio</label>
-                    <textarea id="bio" class="textarea" placeholder="Tell your community a bit about yourself — what you care about and how you help." maxlength="220"></textarea>
+                    <textarea id="bio" class="textarea" placeholder="Tell your community a bit about yourself: what you care about and how you help." maxlength="220"></textarea>
                     <div class="char-count"><span id="bioCount">0</span>/220</div>
                   </div>
                   <div class="field">
@@ -1383,6 +1383,13 @@
   });
 
   /* Stored Avatar Logic */
+/* Only accept a real image data URL here. Nothing else should ever have
+     been written to this key, so anything else means the value was tampered
+     with and is not worth rendering. */
+  function isImageDataUrl(v) {
+    return typeof v === 'string' && /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+  }
+
   var AVATAR_KEY = 'kisa_avatar';
 
   function loadStoredAvatar() {
@@ -1395,7 +1402,7 @@
     var navPfp = document.getElementById('navPfp');
     var navFallback = document.getElementById('navIconFallback');
     if (navPfp && navFallback) {
-      if (dataUrl) {
+      if (isImageDataUrl(dataUrl)) {
         navPfp.src = dataUrl;
         navPfp.classList.add('loaded');
         navFallback.classList.add('hidden');
@@ -1409,7 +1416,7 @@
     var sbImg = document.getElementById('sidebarAvatarImg');
     var sbInitial = document.getElementById('sidebarInitial');
     if (sbImg && sbInitial) {
-      if (dataUrl) {
+      if (isImageDataUrl(dataUrl)) {
         sbImg.src = dataUrl;
         sbImg.classList.add('loaded');
         sbInitial.classList.add('hidden');
@@ -1423,7 +1430,7 @@
     var avatarImg = document.getElementById('avatarImg');
     var avatarFallback = document.getElementById('avatarFallback');
     if (avatarImg && avatarFallback) {
-      if (dataUrl) {
+      if (isImageDataUrl(dataUrl)) {
         avatarImg.src = dataUrl;
         avatarImg.style.display = 'block';
         avatarFallback.style.display = 'none';

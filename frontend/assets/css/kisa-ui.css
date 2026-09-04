@@ -1,4 +1,4 @@
-/* Kisa — shared UI polish layer.
+/* Kisa: shared UI polish layer.
    Loaded last in <head> on every page so it wins ties against the inline
    page styles. Everything here is additive: it changes accessibility and
    touch behaviour, not the visual design. */
@@ -7,7 +7,7 @@
    1. Motion
    The site has a paw-print cursor trail, slide-in entrance animations
    and a carousel that auto-advances every 4.5s. For anyone who has asked
-   their OS for reduced motion, all of that is unwelcome — and for some
+   their OS for reduced motion, all of that is unwelcome, and for some
    people, actively nauseating. Honour the request.
    The paw trail is hidden here; carousel autoplay is stopped in the
    per-page slider script, which CSS cannot reach.
@@ -44,7 +44,7 @@
    the whole page swipe sideways for the first 600ms. Clip it.
    ───────────────────────────────────────────────────────────── */
 /* `clip`, not `hidden`. `overflow-x: hidden` makes the element a scroll
-   container, which silently breaks `position: sticky` on every descendant —
+   container, which silently breaks `position: sticky` on every descendant -
    it took the sticky nav with it. `clip` does the same clipping without
    creating a scroll container. Browsers too old for it (Safari < 16) just
    fall back to the harmless original behaviour. */
@@ -56,7 +56,7 @@ body {
 /* ─────────────────────────────────────────────────────────────
    3. Focus
    Text inputs already have a focus ring, but buttons and links had none
-   of their own and fell back to the browser default — a white outline
+   of their own and fell back to the browser default, a white outline
    that all but vanishes on the light theme. One consistent ring instead.
    :focus-visible means mouse users never see it; keyboard users always do.
    ───────────────────────────────────────────────────────────── */
@@ -99,7 +99,7 @@ body {
 
 /* ─────────────────────────────────────────────────────────────
    4. Touch targets
-   For small icon controls the visual size is deliberately left alone —
+   For small icon controls the visual size is deliberately left alone -
    an invisible ::after pad extends only the *tappable* area out to 44px.
    That is the WCAG 2.5.5 / iOS HIG minimum. Measured before: carousel
    dots 7px, checkboxes 14px, password toggle 24px, post menu 32px,
@@ -133,7 +133,7 @@ body {
     width: 44px;
     height: 44px;
     transform: translate(-50%, -50%);
-    /* purely a hit area — never paints, never blocks the icon */
+    /* purely a hit area, never paints, never blocks the icon */
     background: transparent;
   }
 
@@ -156,7 +156,7 @@ body {
     width: 28px;
   }
 
-  /* Controls that carry a label can simply grow — they have room. */
+  /* Controls that carry a label can simply grow, they have room. */
   .filter-chip,
   .action-btn,
   .btn-adopt,

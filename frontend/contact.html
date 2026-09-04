@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Kisa — Contact Us</title>
+  <title>Kisa - Contact Us</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@
     }
 
     /* ════════════════════════════════════════════════════════════
-       PAGE-SPECIFIC STYLES — CONTACT US
+       PAGE-SPECIFIC STYLES, CONTACT US
        ════════════════════════════════════════════════════════════ */
 
     /* ─── PAGE HERO ─── */
@@ -833,7 +833,7 @@
                 Description <span class="req">*</span>
               </label>
               <textarea class="form-textarea form-input" id="contact-message" name="contact_message"
-                        placeholder="Tell us what's on your mind — the more detail you share, the faster we can help." required></textarea>
+                        placeholder="Tell us what's on your mind. The more detail you share, the faster we can help." required></textarea>
               <div class="form-error-msg" id="err-message">
                 <i data-lucide="alert-circle" style="width:13px;height:13px;"></i>
                 Please enter your message.
@@ -912,7 +912,7 @@
         <div class="info-card-title">Received &amp; Triaged</div>
         <p class="info-card-desc">
           Your message lands directly in our support queue. Each submission is read by a
-          team member and routed to the right person — no bots, no automated brush-offs.
+          team member and routed to the right person, no bots, no automated brush-offs.
         </p>
       </div>
 
@@ -933,7 +933,7 @@
         </div>
         <div class="info-card-title">Feedback Feeds the Platform</div>
         <p class="info-card-desc">
-          Every piece of feedback — critical or positive — informs our roadmap. If
+          Every piece of feedback, critical or positive, informs our roadmap. If
           something you raise leads to a change, we'll note it in our release updates.
         </p>
       </div>
@@ -1231,7 +1231,7 @@
       revealSuccess({
         name:    getEl('contact-name').value.trim(),
         email:   getEl('contact-email').value.trim(),
-        type:    typeEl ? typeLabel(typeEl.value) : '—',
+        type:    typeEl ? typeLabel(typeEl.value) : '-',
         subject: getEl('contact-subject').value.trim()
       });
     });
