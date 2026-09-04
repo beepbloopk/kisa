@@ -574,6 +574,7 @@
     }
     .kisa-modal-faq-item.open .kisa-modal-faq-a { max-height: 400px; padding-bottom: 14px; }
   </style>
+  <link rel="stylesheet" href="assets/css/kisa-modal.css">
 </head>
 <body>
 
@@ -588,8 +589,8 @@
       Kisa
     </a>
     <ul class="nav-links">
-      <li><a href="/map">Live Map</a></li>
-      <li><a href="/cats">Cats</a></li>
+      <li><a href="livemap.html">Live Map</a></li>
+      <li><a href="community.html">Cats</a></li>
       <li><a href="report.html">Report a Sighting</a></li>
       <li><a href="contact.html" class="active">Contact Us</a></li>
     </ul>
@@ -622,8 +623,8 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
-  <a href="/map"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
-  <a href="/cats"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
+  <a href="livemap.html"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="community.html"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
   <a href="report.html"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
   <a href="contact.html"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
   <div class="mob-divider"></div>
@@ -970,9 +971,9 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-links">
-          <li><a href="/cats">Cats</a></li>
+          <li><a href="community.html">Cats</a></li>
           <li><a href="report.html">Report Sighting</a></li>
-          <li><a href="/map">Live Map</a></li>
+          <li><a href="livemap.html">Live Map</a></li>
           <li><a href="/about">About Us</a></li>
         </ul>
       </div>
@@ -1006,18 +1007,6 @@
 </button>
 
 <!-- ── MODAL ── -->
-<div class="kisa-modal-backdrop" id="kisaModalBackdrop"></div>
-<div class="kisa-modal" id="kisaModal" role="dialog" aria-modal="true" aria-labelledby="kisaModalTitle">
-  <div class="kisa-modal-box">
-    <div class="kisa-modal-header">
-      <span class="kisa-modal-title" id="kisaModalTitle"></span>
-      <button class="kisa-modal-close" id="kisaModalClose" aria-label="Close">
-        <i data-lucide="x" style="width:16px;height:16px;"></i>
-      </button>
-    </div>
-    <div class="kisa-modal-body" id="kisaModalBody"></div>
-  </div>
-</div>
 
 <!-- ════════════════════════════════════════════════════ SCRIPTS -->
 <script>
@@ -1313,108 +1302,8 @@
     });
   })();
 
-  /* ── Modal System ── */
-  (function () {
-    var CONTENT = {
-      privacy: {
-        title: 'Privacy Policy',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>What We Collect</h3><p>When you submit this contact form, we collect your name, email address, message type, and the content of your message. If you have an account, your submission may be linked to it.</p><h3>How We Use It</h3><p>Your message is used solely to respond to your enquiry. We do not use contact form submissions for marketing without your explicit consent.</p><h3>Retention</h3><p>Support messages are retained for up to 12 months from the date of submission, after which they are deleted unless ongoing correspondence requires otherwise.</p><h3>Your Rights</h3><p>You may request access to, correction of, or deletion of any personal data we hold about you by emailing privacy@kisa.app.</p>'
-      },
-      terms: {
-        title: 'Terms of Service',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>Use of the Platform</h3><p>By using Kisa, you agree to use the platform lawfully and in a manner that does not harm other users or community cats.</p><h3>User Content</h3><p>You retain ownership of content you submit to Kisa. By submitting content, you grant Kisa a non-exclusive, royalty-free licence to display and distribute that content within the platform.</p><h3>Governing Law</h3><p>These terms shall be governed by applicable law. For questions, contact us at support@kisa.app.</p>'
-      },
-      faq: {
-        title: 'Frequently Asked Questions',
-        html: '<p style="color:var(--text-2);margin-bottom:24px;">Got a question about Kisa? Find answers below.</p><div id="kisaFaqAccordion"></div>',
-        faqs: [
-          { q: 'What is Kisa?', a: 'Kisa is a community platform for tracking and supporting stray and community cats in your neighbourhood.' },
-          { q: 'How do I report a cat sighting?', a: 'Once signed in, click "Report a Sighting" in the navigation bar and complete the form.' },
-          { q: 'How can I get in touch with the Kisa team?', a: 'You can reach us at hello@kisa.app or by using the contact form on this page. We aim to respond within 1–2 business days.' },
-          { q: 'How do I report inappropriate content?', a: 'Use the report option on any post or comment, or contact us directly via the "Report an Issue" option on the contact form.' }
-        ]
-      },
-      cookies: {
-        title: 'Cookie Policy',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>What Are Cookies</h3><p>Cookies are small text files stored on your device when you visit a website.</p><h3>Cookies We Use</h3><ul><li><strong>Essential cookies</strong> — Required for login and core platform functionality.</li><li><strong>Analytics cookies</strong> — Help us understand how the platform is used so we can improve it.</li><li><strong>Preference cookies</strong> — Remember your display settings.</li></ul><h3>Managing Cookies</h3><p>You can control cookies through your browser settings. Disabling essential cookies will affect login functionality. For questions, contact privacy@kisa.app.</p>'
-      }
-    };
-
-    function buildFaqHtml(faqs) {
-      return faqs.map(function(item, i) {
-        return '<div class="kisa-modal-faq-item" data-faq="' + i + '">'
-          + '<button class="kisa-modal-faq-q" type="button">' + item.q
-          + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>'
-          + '</button><div class="kisa-modal-faq-a">' + item.a + '</div></div>';
-      }).join('');
-    }
-
-    function openModal(type) {
-      var data = CONTENT[type];
-      if (!data) return;
-      var modal    = document.getElementById('kisaModal');
-      var backdrop = document.getElementById('kisaModalBackdrop');
-      var title    = document.getElementById('kisaModalTitle');
-      var body     = document.getElementById('kisaModalBody');
-      title.textContent = data.title;
-      body.innerHTML    = data.html;
-      if (type === 'faq' && data.faqs) {
-        var acc = document.getElementById('kisaFaqAccordion');
-        if (acc) {
-          acc.innerHTML = buildFaqHtml(data.faqs);
-          acc.addEventListener('click', function(e) {
-            var btn = e.target.closest('.kisa-modal-faq-q');
-            if (!btn) return;
-            var item    = btn.closest('.kisa-modal-faq-item');
-            var wasOpen = item.classList.contains('open');
-            acc.querySelectorAll('.kisa-modal-faq-item').forEach(function(el) { el.classList.remove('open'); });
-            if (!wasOpen) item.classList.add('open');
-          });
-        }
-      }
-      modal.style.display    = 'flex';
-      backdrop.style.display = 'block';
-      document.body.style.overflow = 'hidden';
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          modal.classList.add('open');
-          backdrop.classList.add('open');
-          if (window.lucide) lucide.createIcons();
-        });
-      });
-      body.scrollTop = 0;
-    }
-
-    function closeModal() {
-      var modal    = document.getElementById('kisaModal');
-      var backdrop = document.getElementById('kisaModalBackdrop');
-      modal.classList.remove('open');
-      backdrop.classList.remove('open');
-      document.body.style.overflow = '';
-      setTimeout(function() {
-        modal.style.display    = 'none';
-        backdrop.style.display = 'none';
-      }, 250);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('a[href="/privacy"], a[href="/terms"], a[href="/faq"], a[href="/cookies"]').forEach(function(el) {
-        el.addEventListener('click', function(e) {
-          e.preventDefault();
-          var map = { '/privacy': 'privacy', '/terms': 'terms', '/faq': 'faq', '/cookies': 'cookies' };
-          openModal(map[el.getAttribute('href')]);
-        });
-      });
-      document.getElementById('kisaModalClose').addEventListener('click', closeModal);
-      document.getElementById('kisaModalBackdrop').addEventListener('click', closeModal);
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-      });
-    });
-
-    window.kisaOpenModal = openModal;
-  })();
 </script>
 
+<script src="assets/js/kisa-modal.js" defer></script>
 </body>
 </html>
