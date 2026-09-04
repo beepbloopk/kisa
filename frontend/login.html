@@ -362,6 +362,7 @@
 
     /* ── PAW CURSOR TRAIL ── (injected via JS) */
   </style>
+  <link rel="stylesheet" href="assets/css/kisa-ui.css">
 </head>
 <body>
 
@@ -614,6 +615,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ── Paw cursor trail ── */
   (function () {
+    /* No cursor to trail on a touch screen, and unwanted if the visitor
+       has asked for reduced motion. */
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var lastX = 0, lastY = 0;
     var distanceThreshold = 110;
     var style = document.createElement('style');

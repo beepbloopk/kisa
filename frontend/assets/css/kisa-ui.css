@@ -1,0 +1,217 @@
+/* Kisa — shared UI polish layer.
+   Loaded last in <head> on every page so it wins ties against the inline
+   page styles. Everything here is additive: it changes accessibility and
+   touch behaviour, not the visual design. */
+
+/* ─────────────────────────────────────────────────────────────
+   1. Motion
+   The site has a paw-print cursor trail, slide-in entrance animations
+   and a carousel that auto-advances every 4.5s. For anyone who has asked
+   their OS for reduced motion, all of that is unwelcome — and for some
+   people, actively nauseating. Honour the request.
+   The paw trail is hidden here; carousel autoplay is stopped in the
+   per-page slider script, which CSS cannot reach.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The entrance animations start at opacity 0 and fade in. Collapsing the
+     duration alone would be enough, but be explicit so nothing can be left
+     invisible if an animation is interrupted. */
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scale-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .paw-trail { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. Horizontal overflow
+   .animate-slide-in-right starts at translateX(40px), which pushes the
+   hero callout past the right edge while it plays. On a phone that makes
+   the whole page swipe sideways for the first 600ms. Clip it.
+   ───────────────────────────────────────────────────────────── */
+/* `clip`, not `hidden`. `overflow-x: hidden` makes the element a scroll
+   container, which silently breaks `position: sticky` on every descendant —
+   it took the sticky nav with it. `clip` does the same clipping without
+   creating a scroll container. Browsers too old for it (Safari < 16) just
+   fall back to the harmless original behaviour. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. Focus
+   Text inputs already have a focus ring, but buttons and links had none
+   of their own and fell back to the browser default — a white outline
+   that all but vanishes on the light theme. One consistent ring instead.
+   :focus-visible means mouse users never see it; keyboard users always do.
+   ───────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent-2, #567C8D);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A few controls set `outline: none` on :focus and so lost their ring
+   entirely. Put it back for keyboard users. */
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible,
+.form-input:focus-visible,
+.form-textarea:focus-visible,
+.form-select:focus-visible,
+.comment-input:focus-visible,
+.modal-textarea:focus-visible {
+  outline: 2px solid var(--accent-2, #567C8D);
+  outline-offset: 1px;
+}
+
+/* Skip-to-content target, if a page grows one. Hidden until focused. */
+.kisa-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 10px 18px;
+  background: var(--surface, #fff);
+  color: var(--text, #2F4156);
+  border: 1px solid var(--border, rgba(47,65,86,0.11));
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+}
+.kisa-skip-link:focus {
+  left: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. Touch targets
+   For small icon controls the visual size is deliberately left alone —
+   an invisible ::after pad extends only the *tappable* area out to 44px.
+   That is the WCAG 2.5.5 / iOS HIG minimum. Measured before: carousel
+   dots 7px, checkboxes 14px, password toggle 24px, post menu 32px,
+   social buttons 34px.
+   ───────────────────────────────────────────────────────────── */
+/* Gate on a narrow viewport OR a touch pointer. `pointer: coarse` alone
+   misses touchscreen laptops, which report a fine primary pointer but are
+   still tapped with fingers; a width query alone misses a large tablet. */
+@media (max-width: 900px), (pointer: coarse) {
+  .sdot,
+  .slider-btn,
+  .pw-toggle,
+  .post-options,
+  .social-btn,
+  .comment-send-btn,
+  .kisa-modal-close {
+    position: relative;
+  }
+
+  .sdot::after,
+  .slider-btn::after,
+  .pw-toggle::after,
+  .post-options::after,
+  .social-btn::after,
+  .comment-send-btn::after,
+  .kisa-modal-close::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    /* purely a hit area — never paints, never blocks the icon */
+    background: transparent;
+  }
+
+  /* Carousel controls sit in a tight row; without more gap the padded hit
+     areas would overlap and steal taps from their neighbour. */
+  .slider-btns {
+    display: flex;
+    gap: 14px;
+  }
+
+  /* The dots are only 7px wide (22px when active), so even at a wider gap a
+     full 44px pad would cross into the next dot. Keep the full 44px height
+     and narrow the pad to sit inside the centre-to-centre spacing. */
+  .slider-dots {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .sdot::after {
+    width: 28px;
+  }
+
+  /* Controls that carry a label can simply grow — they have room. */
+  .filter-chip,
+  .action-btn,
+  .btn-adopt,
+  .tab-link,
+  .sidebar-link {
+    min-height: 44px;
+  }
+
+  .hamburger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Checkboxes and radios render at 14–15px, which is a hard tap to land.
+     Scale the control itself; these are never dense enough for it to hurt
+     the layout. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  /* Give the label next to a checkbox a taller line box so the whole row
+     is comfortably tappable, not just the box itself. */
+  .remember-label,
+  .terms-label,
+  .checkbox-row,
+  .remember-row,
+  .terms-row {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. Legibility
+   A handful of meta labels sit at 10px, which is below what most people
+   can read comfortably on a phone. 11px is the floor here; badges keep
+   their compact look.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .sidebar-heading,
+  .panel-eyebrow,
+  .section-eyebrow {
+    font-size: 11px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. Images
+   Nothing on the page should be able to push the layout wider than the
+   viewport, including a photo that fails to load and falls back to its
+   intrinsic size.
+   ───────────────────────────────────────────────────────────── */
+img {
+  max-width: 100%;
+  height: auto;
+}

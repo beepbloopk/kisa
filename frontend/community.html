@@ -632,6 +632,7 @@
     }
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css">
 </head>
 <body>
 
@@ -694,7 +695,7 @@
     </div>
     <h3>I've taken them in!</h3>
     <p>Let the community know this cat is safe with you. Your update will be pinned so everyone can see they've found a home.</p>
-    <textarea class="modal-textarea" id="adoptNote"
+    <textarea class="modal-textarea" id="adoptNote" aria-label="Note to the community about taking this cat in"
       placeholder="Add a note… e.g. &quot;Taking them to the vet tomorrow, safe with me for now&quot;"></textarea>
     <div class="modal-btns">
       <button class="btn-modal-cancel" onclick="closeAdoptModal()">Cancel</button>
@@ -827,7 +828,7 @@
               </div>
               <div class="comment-input-row">
                 <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…">
+                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
                 <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
                   <i data-lucide="send" style="width:13px;height:13px;"></i>
                 </button>
@@ -942,7 +943,7 @@
               </div>
               <div class="comment-input-row">
                 <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…">
+                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
                 <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
                   <i data-lucide="send" style="width:13px;height:13px;"></i>
                 </button>
@@ -1064,7 +1065,7 @@
               </div>
               <div class="comment-input-row">
                 <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…">
+                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
                 <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
                   <i data-lucide="send" style="width:13px;height:13px;"></i>
                 </button>
@@ -1183,7 +1184,7 @@
               </div>
               <div class="comment-input-row">
                 <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…">
+                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
                 <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
                   <i data-lucide="send" style="width:13px;height:13px;"></i>
                 </button>

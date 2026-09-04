@@ -974,6 +974,7 @@
     }
   </style>
   <link rel="stylesheet" href="assets/css/kisa-modal.css">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css">
 </head>
 <body>
 
@@ -1553,7 +1554,14 @@
       track.style.transform = 'translateX(-' + (cur * 100) + '%)';
       dots.forEach(function (d, i) { d.classList.toggle('active', i === cur); });
     }
-    function startAuto() { timer = setInterval(function () { goTo(cur + 1); }, 4500); }
+    /* Don't auto-advance for anyone who has asked for reduced motion:
+       content that changes on its own is exactly what that setting is for.
+       The arrows and dots still work. */
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function startAuto() {
+      if (reduceMotion.matches) return;
+      timer = setInterval(function () { goTo(cur + 1); }, 4500);
+    }
     function resetAuto() { clearInterval(timer); startAuto(); }
 
     prev.addEventListener('click', function () { goTo(cur - 1); resetAuto(); });
