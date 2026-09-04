@@ -605,6 +605,11 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.disabled = true;
     btn.textContent = 'Logging in…';
 
+    /* Decide where the session is stored before signing in, so the very
+       first write lands in the right place. */
+    var remember = document.getElementById('rememberMe');
+    KisaStore.auth.setRemember(!remember || remember.checked);
+
     KisaStore.auth.signIn(email, password)
       .then(function () {
         btn.textContent = 'Welcome back!';

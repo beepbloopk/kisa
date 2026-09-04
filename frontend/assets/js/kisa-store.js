@@ -23,6 +23,34 @@
 
   var client = null;
 
+  /* "Remember me" decides where the session is kept. localStorage survives
+     closing the browser; sessionStorage does not. Supabase defaults to
+     localStorage always, which is why the checkbox did nothing before.
+     The adapter is consulted on every read and write, so the choice can be
+     made at sign-in time rather than when the client is created. */
+  var REMEMBER_KEY = 'kisa_remember';
+
+  function remembering() {
+    try { return localStorage.getItem(REMEMBER_KEY) !== '0'; }
+    catch (e) { return true; }
+  }
+
+  var sessionStore = {
+    getItem: function (k) {
+      try { return (remembering() ? localStorage : sessionStorage).getItem(k); }
+      catch (e) { return null; }
+    },
+    setItem: function (k, v) {
+      try { (remembering() ? localStorage : sessionStorage).setItem(k, v); }
+      catch (e) { /* storage blocked: the session just will not persist */ }
+    },
+    removeItem: function (k) {
+      /* Clear both, so signing out never leaves a stale copy behind. */
+      try { localStorage.removeItem(k); } catch (e) {}
+      try { sessionStorage.removeItem(k); } catch (e) {}
+    }
+  };
+
   function sb() {
     if (client) return client;
     if (!global.supabase || !global.supabase.createClient) {
@@ -34,7 +62,7 @@
     client = global.supabase.createClient(
       global.KISA_CONFIG.supabaseUrl,
       global.KISA_CONFIG.supabaseAnonKey,
-      { auth: { persistSession: true, autoRefreshToken: true } }
+      { auth: { persistSession: true, autoRefreshToken: true, storage: sessionStore } }
     );
     return client;
   }
@@ -95,12 +123,39 @@
       });
     },
 
+    /* Call before signIn. true keeps you signed in after the browser closes,
+       false ends the session with the browser. */
+    setRemember: function (on) {
+      try { localStorage.setItem(REMEMBER_KEY, on ? '1' : '0'); } catch (e) {}
+    },
+
+    isRemembering: remembering,
+
     signIn: function (email, password) {
       return sb().auth.signInWithPassword({ email: email, password: password })
         .then(function (r) {
           if (r.error) throw fail(r.error);
           return r.data.user;
         });
+    },
+
+    /* Deleting a user requires privileges the anon key does not have, so this
+       calls delete_own_account(), a SECURITY DEFINER function in the database
+       that removes the caller's own rows and then their auth record. If that
+       function has not been installed the call fails loudly rather than
+       pretending it worked. */
+    deleteAccount: function () {
+      return sb().rpc('delete_own_account').then(function (r) {
+        if (r.error) {
+          var m = r.error.message || '';
+          if (/could not find|does not exist|schema cache/i.test(m)) {
+            throw new Error('Account deletion is not set up on the server yet. ' +
+                            'Please contact us at hello@kisa.app and we will remove your account.');
+          }
+          throw fail(r.error);
+        }
+        return sb().auth.signOut();
+      });
     },
 
     signOut: function () {

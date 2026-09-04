@@ -39,15 +39,23 @@
      makes the wrong state flash first. Confirmed against the real session
      immediately afterwards. */
   function cachedSession() {
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (/^sb-.*-auth-token$/.test(k)) {
-          var v = JSON.parse(localStorage.getItem(k));
-          if (v && v.access_token && v.user) return v;
+    /* Both stores: with "remember me" off the session lives in
+       sessionStorage instead, and the navbar has to find it there too. */
+    var stores;
+    try { stores = [localStorage, sessionStorage]; }
+    catch (e) { return null; }
+
+    for (var s = 0; s < stores.length; s++) {
+      try {
+        for (var i = 0; i < stores[s].length; i++) {
+          var k = stores[s].key(i);
+          if (/^sb-.*-auth-token$/.test(k)) {
+            var v = JSON.parse(stores[s].getItem(k));
+            if (v && v.access_token && v.user) return v;
+          }
         }
-      }
-    } catch (e) { /* private mode, blocked storage: treat as signed out */ }
+      } catch (e) { /* private mode, blocked storage: treat as signed out */ }
+    }
     return null;
   }
 

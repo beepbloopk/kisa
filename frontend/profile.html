@@ -1602,9 +1602,24 @@
   if (exportDataBtn)   exportDataBtn.addEventListener('click', function () { showToast('Data export requested. Check your email shortly.'); });
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', function () {
-      if (window.confirm('Are you sure? This permanently deletes your account and all your data. This cannot be undone.')) {
-        showToast('Account deletion requested');
+      if (!window.confirm('Are you sure? This permanently deletes your account, ' +
+                          'your sightings, posts and comments. This cannot be undone.')) return;
+      /* Second confirmation: this is irreversible and the first dialog is easy
+         to click through. */
+      if (window.prompt('Type DELETE to confirm.') !== 'DELETE') {
+        showToast('Account deletion cancelled');
+        return;
       }
+      deleteAccountBtn.disabled = true;
+      var original = deleteAccountBtn.textContent;
+      deleteAccountBtn.textContent = 'Deleting...';
+      KisaStore.auth.deleteAccount()
+        .then(function () { window.location.href = 'index.html'; })
+        .catch(function (err) {
+          deleteAccountBtn.disabled = false;
+          deleteAccountBtn.textContent = original;
+          window.alert(err.message);
+        });
     });
   }
 
