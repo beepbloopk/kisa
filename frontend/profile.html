@@ -447,6 +447,9 @@
 
     .input-icon-wrap { position: relative; }
     .input-icon-wrap .input { padding-left: 40px; }
+    /* Reserve room for the Verified badge on the right, otherwise a long
+       email address runs underneath it. */
+    .input-icon-wrap .input.has-badge { padding-right: 96px; }
     .input-icon-wrap .field-icon {
       position: absolute;
       left: 13px;
@@ -471,6 +474,31 @@
     }
     .verified-badge svg { width: 13px; height: 13px; }
 
+    .reports-loading { padding: 28px 0; text-align: center; font-size: 13px; color: var(--text-3); }
+    .reports-list { display: flex; flex-direction: column; gap: 12px; }
+    .report-card {
+      display: flex; gap: 14px; align-items: flex-start;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 14px; background: var(--surface);
+    }
+    .report-thumb { width: 66px; height: 66px; flex-shrink: 0; border-radius: 10px; object-fit: cover; background: var(--accent-10); }
+    .report-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+    .report-thumb-empty svg { width: 26px; height: 26px; }
+    .report-main { flex: 1; min-width: 0; }
+    .report-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+    .report-where { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .report-meta { font-size: 12px; color: var(--text-3); }
+    .report-desc { font-size: 13px; color: var(--text-body); margin-top: 6px; line-height: 1.5; }
+    .report-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .rb-healthy    { background: rgba(78,158,120,0.16); color: #3f8b66; }
+    .rb-needs-care { background: rgba(214,158,69,0.18); color: #a97620; }
+    .rb-injured    { background: rgba(214,110,69,0.18); color: #b1552c; }
+    .rb-sos        { background: rgba(214,69,69,0.18);  color: #b23b3b; }
+    .rb-pending    { background: var(--accent-10); color: var(--text-2); }
+    @media (prefers-color-scheme: dark) {
+      .rb-healthy { color: #7fc7a2; } .rb-needs-care { color: #e0b35c; }
+      .rb-injured { color: #e59470; } .rb-sos { color: #ef8a8a; }
+    }
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -1059,7 +1087,7 @@
                   </div>
                   <div class="field">
                     <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" class="input" placeholder="Your full name" value="Kari" maxlength="60">
+                    <input type="text" id="fullName" class="input" placeholder="Your full name" maxlength="60">
                   </div>
                   <div class="field">
                     <label for="bio">Bio</label>
@@ -1089,8 +1117,8 @@
                       <label for="email">Email</label>
                       <div class="input-icon-wrap">
                         <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        <input type="email" id="email" class="input" value="kari@example.com" disabled>
-                        <span class="verified-badge">
+                        <input type="email" id="email" class="input" value="" disabled>
+                        <span class="verified-badge" hidden>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                           Verified
                         </span>
@@ -1132,7 +1160,11 @@
             </a>
           </div>
 
-          <div class="empty-state" id="reportsEmptyState">
+          <div class="reports-list" id="reportsList" hidden></div>
+
+          <div class="reports-loading" id="reportsLoading">Loading your reports...</div>
+
+          <div class="empty-state" id="reportsEmptyState" hidden>
             <div class="empty-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </div>
@@ -1160,8 +1192,8 @@
               <label for="settingsEmail">Email address</label>
               <div class="input-icon-wrap">
                 <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <input type="email" id="settingsEmail" class="input" value="kari@example.com" disabled>
-                <span class="verified-badge">
+                <input type="email" id="settingsEmail" class="input" value="" disabled>
+                <span class="verified-badge" hidden>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                   Verified
                 </span>
@@ -1523,7 +1555,36 @@
   if (profileForm) {
     profileForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      showToast('Profile saved');
+      if (!kisaUser) { showToast('Please sign in first'); return; }
+
+      var saveBtn = profileForm.querySelector('button[type="submit"]');
+      var label = saveBtn ? saveBtn.textContent : '';
+      var restore = function () {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = label; }
+      };
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      var phoneEl = document.getElementById('phone');
+      var fields = {
+        display_name: (fullNameInput.value || '').trim() || kisaUser.email,
+        phone: phoneEl ? ((phoneEl.value || '').trim() || null) : null
+      };
+      if (kisaProfileExtras) {
+        var locEl = document.getElementById('location');
+        fields.bio = bioInput ? ((bioInput.value || '').trim() || null) : null;
+        fields.location = locEl ? ((locEl.value || '').trim() || null) : null;
+      }
+
+      KisaStore.profiles.update(kisaUser.id, fields)
+        .then(function (row) {
+          restore();
+          showToast('Profile saved');
+          /* The navbar reads the name from the auth token, which does not
+             change when the profiles row does. Keep the two in step. */
+          return KisaStore.client().auth.updateUser({ data: { full_name: row.display_name } });
+        })
+        .then(function () { syncNameDisplay(); })
+        .catch(function (err) { restore(); showToast(err.message || 'Could not save your profile'); });
     });
   }
 
@@ -1535,7 +1596,159 @@
     });
   }
 
+  /* ---- Your Reports ---- */
+  var CONDITION_LABEL = {
+    'healthy': 'Healthy', 'needs-care': 'Needs Care',
+    'injured': 'Injured', 'sos': 'Emergency'
+  };
+
+  function formatWhen(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function reportCard(row) {
+    var card = document.createElement('div');
+    card.className = 'report-card';
+
+    var path = row.sighting_images && row.sighting_images[0] && row.sighting_images[0].storage_path;
+    if (path) {
+      var img = document.createElement('img');
+      img.className = 'report-thumb';
+      img.alt = '';
+      img.src = KisaStore.sightings.publicPhotoUrl(path);
+      card.appendChild(img);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = 'report-thumb report-thumb-empty';
+      ph.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c-4 0-7 3-7 7v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5c0-4-3-7-7-7z"/><path d="M5 12 4 6l4 2"/><path d="M19 12l1-6-4 2"/><circle cx="9.5" cy="13" r="0.6" fill="currentColor"/><circle cx="14.5" cy="13" r="0.6" fill="currentColor"/></svg>';
+      card.appendChild(ph);
+    }
+
+    var main = document.createElement('div');
+    main.className = 'report-main';
+
+    var top = document.createElement('div');
+    top.className = 'report-top';
+
+    /* textContent throughout: every value below was typed by a person. */
+    var where = document.createElement('span');
+    where.className = 'report-where';
+    where.textContent = row.location_text || 'Location on map';
+    top.appendChild(where);
+
+    if (row.condition) {
+      var badge = document.createElement('span');
+      badge.className = 'report-badge rb-' + row.condition;
+      badge.textContent = CONDITION_LABEL[row.condition] || row.condition;
+      top.appendChild(badge);
+    }
+    if (row.match_status === 'pending') {
+      var m = document.createElement('span');
+      m.className = 'report-badge rb-pending';
+      m.textContent = 'Awaiting match';
+      top.appendChild(m);
+    }
+    main.appendChild(top);
+
+    var meta = document.createElement('div');
+    meta.className = 'report-meta';
+    meta.textContent = 'Seen ' + formatWhen(row.sighted_date);
+    main.appendChild(meta);
+
+    if (row.description) {
+      var d = document.createElement('div');
+      d.className = 'report-desc';
+      d.textContent = row.description;
+      main.appendChild(d);
+    }
+
+    card.appendChild(main);
+    return card;
+  }
+
+  function loadMyReports(userId) {
+    var list = document.getElementById('reportsList');
+    var empty = document.getElementById('reportsEmptyState');
+    var loading = document.getElementById('reportsLoading');
+    if (!list) return;
+
+    KisaStore.sightings.listMine(userId).then(function (rows) {
+      if (loading) loading.hidden = true;
+      list.innerHTML = '';
+      if (!rows.length) {
+        list.hidden = true;
+        if (empty) empty.hidden = false;
+        return;
+      }
+      if (empty) empty.hidden = true;
+      list.hidden = false;
+      rows.forEach(function (row) { list.appendChild(reportCard(row)); });
+    }).catch(function (err) {
+      if (loading) { loading.hidden = false; loading.textContent = err.message || 'Could not load your reports.'; }
+    });
+  }
+
+  /* ---- Load the signed-in account ----
+     Everything above was written against placeholder markup. These fill it
+     from the real user and their profiles row. */
+  var kisaUser = null;
+  var kisaProfileExtras = false;   /* whether profiles has bio and location */
+
+  function fillEmail(user) {
+    ['email', 'settingsEmail'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.value = user.email || '';
+      var wrap = el.closest('.input-icon-wrap');
+      var badge = wrap && wrap.querySelector('.verified-badge');
+      if (badge) {
+        /* Only claim Verified when it actually is. With email confirmation
+           switched off, Supabase stamps email_confirmed_at at signup even
+           though nobody clicked a link, so that field would show Verified
+           for every account. identity_data.email_verified is the honest
+           signal and only turns true after a real confirmation. */
+        var ident = (user.identities || [])[0];
+        var verified = !!(ident && ident.identity_data && ident.identity_data.email_verified);
+        badge.hidden = !verified;
+        el.classList.toggle('has-badge', verified);
+      }
+    });
+  }
+
+  function loadAccount() {
+    if (!window.KisaStore) return;
+    KisaStore.auth.getUser().then(function (user) {
+      if (!user) return;           /* kisa-auth-ui.js handles the redirect */
+      kisaUser = user;
+      fillEmail(user);
+      return KisaStore.profiles.get(user.id).then(function (profile) {
+        var meta = user.user_metadata || {};
+        var name = (profile && profile.display_name) || meta.full_name || '';
+        if (fullNameInput) fullNameInput.value = name;
+
+        var phoneEl = document.getElementById('phone');
+        if (phoneEl && profile && profile.phone) phoneEl.value = profile.phone;
+
+        if (profile && Object.prototype.hasOwnProperty.call(profile, 'bio')) {
+          kisaProfileExtras = true;
+          if (bioInput && profile.bio) {
+            bioInput.value = profile.bio;
+            if (bioCount) bioCount.textContent = String(profile.bio.length);
+          }
+          var locEl = document.getElementById('location');
+          if (locEl && profile.location) locEl.value = profile.location;
+        }
+        syncNameDisplay();
+        loadMyReports(user.id);
+      });
+    }).catch(function () { /* signed out: the auth guard takes over */ });
+  }
+
   syncNameDisplay();
+  loadAccount();
 
   /* Tab state routing updates */
   var sidebarLinks = document.querySelectorAll('.sidebar-link[data-tab]');
@@ -1596,10 +1809,75 @@
   var exportDataBtn = document.getElementById('exportDataBtn');
   var deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
-  if (saveSecurityBtn) saveSecurityBtn.addEventListener('click', function () { showToast('Security settings saved'); });
-  if (saveNotifBtn)    saveNotifBtn.addEventListener('click', function () { showToast('Notification preferences saved'); });
-  if (savePrivacyBtn)  savePrivacyBtn.addEventListener('click', function () { showToast('Privacy settings saved'); });
-  if (exportDataBtn)   exportDataBtn.addEventListener('click', function () { showToast('Data export requested. Check your email shortly.'); });
+  /* Supabase's updateUser does not ask for the old password, so we check it
+     ourselves by signing in with it first. Without that, anyone borrowing an
+     unlocked laptop could change the password. */
+  if (saveSecurityBtn) saveSecurityBtn.addEventListener('click', function () {
+    var cur = document.getElementById('currentPassword');
+    var next = document.getElementById('newPassword');
+    var conf = document.getElementById('confirmPassword');
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    if (!cur.value) { showToast('Enter your current password'); cur.focus(); return; }
+    if (!next.value || next.value.length < 8) {
+      showToast('New password must be at least 8 characters'); next.focus(); return;
+    }
+    if (next.value !== conf.value) { showToast('New passwords do not match'); conf.focus(); return; }
+    if (next.value === cur.value) { showToast('That is already your password'); next.focus(); return; }
+
+    var label = saveSecurityBtn.textContent;
+    var restore = function () { saveSecurityBtn.disabled = false; saveSecurityBtn.textContent = label; };
+    saveSecurityBtn.disabled = true;
+    saveSecurityBtn.textContent = 'Updating...';
+
+    KisaStore.auth.signIn(kisaUser.email, cur.value)
+      .catch(function () { throw new Error('Your current password is not correct'); })
+      .then(function () { return KisaStore.client().auth.updateUser({ password: next.value }); })
+      .then(function (r) {
+        if (r.error) throw new Error(r.error.message);
+        restore();
+        cur.value = ''; next.value = ''; conf.value = '';
+        showToast('Password updated');
+      })
+      .catch(function (err) { restore(); showToast(err.message || 'Could not update password'); });
+  });
+
+  /* These have nowhere to go: profiles has no notification or visibility
+     columns. Say so rather than showing a false "saved". */
+  function notStoredYet(btn, what) {
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      showToast(what + ' are not saved yet, this is coming soon');
+    });
+  }
+  notStoredYet(saveNotifBtn, 'Notification preferences');
+  notStoredYet(savePrivacyBtn, 'Privacy settings');
+
+  /* Export what we actually hold, straight from the browser. */
+  if (exportDataBtn) exportDataBtn.addEventListener('click', function () {
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    exportDataBtn.disabled = true;
+    Promise.all([
+      KisaStore.profiles.get(kisaUser.id),
+      KisaStore.sightings.listMine(kisaUser.id)
+    ]).then(function (res) {
+      var blob = new Blob([JSON.stringify({
+        exported_at: new Date().toISOString(),
+        account: { id: kisaUser.id, email: kisaUser.email, created_at: kisaUser.created_at },
+        profile: res[0], sightings: res[1]
+      }, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'kisa-my-data.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      exportDataBtn.disabled = false;
+      showToast('Your data has been downloaded');
+    }).catch(function (err) {
+      exportDataBtn.disabled = false;
+      showToast(err.message || 'Could not export your data');
+    });
+  });
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', function () {
       if (!window.confirm('Are you sure? This permanently deletes your account, ' +

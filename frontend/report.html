@@ -1551,7 +1551,11 @@
           KisaMap.reverseGeocode(lat, lng).then(function (name) {
             if (name && !input.value.trim()) {
               input.value = name;
-              clearErr(input, 'err-location');
+              /* clearErr belongs to the form's own IIFE and is not in scope
+                 here, so clear the error state directly. */
+              input.classList.remove('is-error');
+              var le = document.getElementById('err-location');
+              if (le) le.classList.remove('show');
             }
           });
         }
