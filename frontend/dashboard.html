@@ -536,28 +536,43 @@
     .signal-dot.live { background: var(--accent-2); }
 
     /* SLIDER */
-    .hero-art {
-      position: relative;
+    .hero-stats {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--r-lg);
-      padding: 28px 28px 24px;
+      padding: 26px 26px 22px;
       box-shadow: var(--shadow-sm);
-      text-align: center;
     }
-    .hero-art svg { width: 100%; max-width: 380px; height: auto; margin: 0 auto; display: block; }
-    .hero-art-caption {
-      margin-top: 14px;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-2);
-      max-width: 340px;
-      margin-left: auto;
-      margin-right: auto;
+    .hero-stats-head { margin-bottom: 18px; }
+    .hero-stats-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--text-3);
     }
-    @media (max-width: 900px) {
-      .hero-art { padding: 22px 18px 18px; }
-      .hero-art svg { max-width: 300px; }
+    .hero-stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    .hero-stat {
+      background: var(--accent-10);
+      border-radius: var(--r-sm);
+      padding: 16px 16px 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .hero-stat-num {
+      font-size: 30px; font-weight: 800; line-height: 1;
+      color: var(--text); letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .hero-stat-label { font-size: 12px; line-height: 1.4; color: var(--text-2); }
+    .hero-stat-sos .hero-stat-num { color: #b23b3b; }
+    @media (prefers-color-scheme: dark) { .hero-stat-sos .hero-stat-num { color: #ef8a8a; } }
+    /* Nothing urgent is not a failure state, so it reads as normal text. */
+    .hero-stat-sos.is-zero .hero-stat-num { color: var(--text); }
+    .hero-stats-foot {
+      margin-top: 16px; font-size: 12.5px; line-height: 1.55; color: var(--text-3);
+    }
+    @media (max-width: 520px) {
+      .hero-stats { padding: 20px 18px 18px; }
+      .hero-stat-num { font-size: 26px; }
     }
     .hero-visual { position: relative; }
     .slider-wrapper { overflow: hidden; border-radius: var(--r-lg); }
@@ -996,13 +1011,13 @@
       .footer-bottom-links { flex-direction: column; gap: 8px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05d">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05d">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05f">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05f">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05d"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05d"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05d" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-05d" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05f"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05f"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05f" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-05f" defer></script>
 </head>
 <body>
 
@@ -1092,6 +1107,31 @@
     </div>
 
     <!-- Right -->
+    <div class="hero-visual">
+      <div class="hero-stats" id="heroStats">
+        <div class="hero-stats-head">
+          <span class="hero-stats-eyebrow">Your community right now</span>
+        </div>
+        <div class="hero-stats-grid">
+          <div class="hero-stat">
+            <span class="hero-stat-num" data-stat="sightings">&ndash;</span>
+            <span class="hero-stat-label">Sightings logged</span>
+          </div>
+          <div class="hero-stat hero-stat-sos">
+            <span class="hero-stat-num" data-stat="activeSos">&ndash;</span>
+            <span class="hero-stat-label">Needing urgent help</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-num" data-stat="neighbours">&ndash;</span>
+            <span class="hero-stat-label">Neighbours signed up</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-num" data-stat="takenIn">&ndash;</span>
+            <span class="hero-stat-label">Cats taken in</span>
+          </div>
+        </div>
+        <p class="hero-stats-foot" id="heroStatsFoot">Loading the latest numbers...</p>
+      </div>
 
   </div>
 </section>
@@ -1621,6 +1661,37 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05d" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05f" defer></script>
+
+<script>
+/* Live numbers for the hero. Read only and public, so this works signed out.
+   If it cannot load, the card is removed rather than left showing dashes. */
+document.addEventListener('DOMContentLoaded', function () {
+  var card = document.getElementById('heroStats');
+  if (!card || !window.KisaStore) return;
+  var foot = document.getElementById('heroStatsFoot');
+
+  KisaStore.stats.overview().then(function (s) {
+    Object.keys(s).forEach(function (k) {
+      var el = card.querySelector('[data-stat="' + k + '"]');
+      if (el && s[k] !== null) el.textContent = String(s[k]);
+    });
+    var sos = card.querySelector('.hero-stat-sos');
+    if (sos) sos.classList.toggle('is-zero', !s.activeSos);
+
+    if (!s.sightings) {
+      foot.textContent = 'No sightings logged yet. Be the first to report one.';
+    } else if (s.thisWeek) {
+      foot.textContent = s.thisWeek === 1
+        ? '1 sighting reported in the last week.'
+        : s.thisWeek + ' sightings reported in the last week.';
+    } else {
+      foot.textContent = 'Nothing new this week.';
+    }
+  }).catch(function () {
+    card.remove();
+  });
+});
+</script>
 </body>
 </html>

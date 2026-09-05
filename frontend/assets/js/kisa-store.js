@@ -432,6 +432,35 @@
     }
   };
 
+  /* ── Stats ────────────────────────────────────────────────────── */
+
+  var Stats = {
+    /* Counts for the homepage. head:true means Postgres returns the count
+       without sending any rows. Everything here is publicly readable, so it
+       works signed out too. */
+    overview: function () {
+      var weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      function count(q) {
+        return q.then(function (r) { return r.error ? null : (r.count || 0); });
+      }
+      return Promise.all([
+        count(sb().from('sightings').select('id', { count: 'exact', head: true })),
+        count(sb().from('sightings').select('id', { count: 'exact', head: true })
+                .eq('condition', 'sos').is('taken_in_by', null)),
+        count(sb().from('profiles').select('id', { count: 'exact', head: true })),
+        count(sb().from('sightings').select('id', { count: 'exact', head: true })
+                .gte('created_at', weekAgo)),
+        count(sb().from('sightings').select('id', { count: 'exact', head: true })
+                .not('taken_in_by', 'is', null))
+      ]).then(function (r) {
+        return {
+          sightings: r[0], activeSos: r[1], neighbours: r[2],
+          thisWeek: r[3], takenIn: r[4]
+        };
+      });
+    }
+  };
+
   /* ── Notifications ────────────────────────────────────────────── */
 
   var Notifications = {
@@ -568,6 +597,7 @@
     profiles: Profiles,
     sightings: Sightings,
     notifications: Notifications,
+    stats: Stats,
     feed: Feed,
     sos: Sos,
     cats: Cats,
