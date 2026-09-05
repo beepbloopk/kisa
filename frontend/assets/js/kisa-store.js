@@ -367,6 +367,31 @@
     deleteComment: function (commentId) {
       return sb().from('sighting_comments').delete().eq('id', commentId)
         .then(function (r) { if (r.error) throw fail(r.error); });
+    },
+
+    /* Delete a report. The sighting_images, likes and comments rows cascade,
+       but the uploaded files in storage do not, so remove those first. RLS
+       limits this to your own sightings. */
+    remove: function (sightingId) {
+      return sb().from('sighting_images').select('storage_path')
+        .eq('sighting_id', sightingId)
+        .then(function (r) {
+          var paths = (r.data || []).map(function (i) { return i.storage_path; });
+          if (!paths.length) return null;
+          /* Best effort: a leftover file is untidy, a blocked delete is worse. */
+          return sb().storage.from('sighting-images').remove(paths).catch(function () {});
+        })
+        .then(function () {
+          return sb().from('sightings').delete().eq('id', sightingId).select();
+        })
+        .then(function (r) {
+          if (r.error) throw fail(r.error);
+          /* An empty result means RLS matched nothing, so it was not yours. */
+          if (!r.data || !r.data.length) {
+            throw new Error('That report could not be deleted. It may not be yours.');
+          }
+          return true;
+        });
     }
   };
 

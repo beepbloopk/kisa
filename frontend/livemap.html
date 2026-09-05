@@ -337,10 +337,8 @@
     .map-pin.status-sos { z-index: 3; }
     .map-pin.status-sos .map-pin-marker::before {
       content:''; position:absolute; inset:-6px; border-radius:50% 50% 50% 3px;
-      border:2px solid rgba(47,65,86,0.35); animation: sosPulse 1.8s ease-out infinite;
+      border:2px solid rgba(47,65,86,0.35);
     }
-    @keyframes sosPulse {
-      0%   { transform: scale(0.85); opacity: 0.9; }
       100% { transform: scale(1.35); opacity: 0; }
     }
     .map-pin-label {
@@ -551,12 +549,12 @@
       .back-to-top { bottom: 24px; right: 24px; width: 44px; height: 44px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05a">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05a">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05b">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05a"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05a"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05a" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05b" defer></script>
 </head>
 <body>
 
@@ -1085,6 +1083,6 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05a" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05b" defer></script>
 </body>
 </html>

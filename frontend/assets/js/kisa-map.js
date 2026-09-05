@@ -26,7 +26,7 @@
   function pinIcon() {
     return global.L.divIcon({
       className: 'kisa-pin',
-      html: '<span class="kisa-pin-dot"></span><span class="kisa-pin-pulse"></span>',
+      html: '<span class="kisa-pin-dot"></span>',
       iconSize: [28, 28],
       iconAnchor: [14, 14]
     });

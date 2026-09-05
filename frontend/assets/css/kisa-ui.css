@@ -346,29 +346,22 @@ img {
   border: 3px solid #fff;
   box-shadow: 0 2px 8px rgba(47, 65, 86, 0.45);
 }
-.kisa-pin-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 28px;
-  height: 28px;
-  margin: -14px 0 0 -14px;
-  border-radius: 50%;
-  background: var(--accent-2, #567C8D);
-  opacity: 0.35;
-  animation: kisaPinPulse 1.8s ease-out infinite;
-}
-@keyframes kisaPinPulse {
-  0%   { transform: scale(0.6); opacity: 0.45; }
-  70%  { transform: scale(1.5); opacity: 0; }
-  100% { transform: scale(1.5); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .kisa-pin-pulse { animation: none; opacity: 0.25; }
-}
 
 /* Leaflet's own controls, toned down to match the design. */
 .leaflet-control-attribution {
   font-size: 10px !important;
   background: rgba(255, 255, 255, 0.75) !important;
 }
+
+/* ---------------------------------------------------------------
+   10. Delete your own report, shown in the community feed
+   --------------------------------------------------------------- */
+.post-delete {
+  color: var(--text-3);
+  transition: background 0.15s, color 0.15s;
+}
+.post-delete:hover {
+  background: rgba(214, 69, 69, 0.12);
+  color: #c0504a;
+}
+.post-delete:disabled { opacity: 0.5; cursor: default; }

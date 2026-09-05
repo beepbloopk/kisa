@@ -499,6 +499,16 @@
       .rb-healthy { color: #7fc7a2; } .rb-needs-care { color: #e0b35c; }
       .rb-injured { color: #e59470; } .rb-sos { color: #ef8a8a; }
     }
+    .report-delete {
+      flex-shrink: 0; align-self: flex-start;
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); transition: background 0.15s, color 0.15s;
+    }
+    .report-delete svg { width: 16px; height: 16px; }
+    .report-delete:hover { background: rgba(214,69,69,0.12); color: #c0504a; }
+    .report-delete:disabled { opacity: 0.5; cursor: default; }
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -942,12 +952,12 @@
       .kisa-modal { align-items: flex-end; padding: 0; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05a">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05a">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05b">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05a"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05a"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05a" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05b" defer></script>
 </head>
 <body>
 
@@ -1666,6 +1676,38 @@
     }
 
     card.appendChild(main);
+
+    /* Delete a report you posted. RLS refuses anyone else's. */
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'report-delete';
+    del.title = 'Delete this report';
+    del.setAttribute('aria-label', 'Delete this report');
+    del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+      + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<polyline points="3 6 5 6 21 6"/>'
+      + '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'
+      + '<path d="M10 11v6"/><path d="M14 11v6"/>'
+      + '<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+    del.addEventListener('click', function () {
+      if (!window.confirm('Delete this report? Its photo, likes and comments go '
+                        + 'with it. This cannot be undone.')) return;
+      del.disabled = true;
+      KisaStore.sightings.remove(row.id).then(function () {
+        card.remove();
+        var list = document.getElementById('reportsList');
+        if (list && !list.querySelector('.report-card')) {
+          list.hidden = true;
+          var empty = document.getElementById('reportsEmptyState');
+          if (empty) empty.hidden = false;
+        }
+        showToast('Report deleted');
+      }).catch(function (err) {
+        del.disabled = false;
+        showToast(err.message || 'Could not delete that report');
+      });
+    });
+    card.appendChild(del);
     return card;
   }
 
@@ -2010,6 +2052,6 @@
 
 <!-- ══ COOKIES/LEGAL POPUP INTERACTIVE HANDLERS MODAL MODULE ENGINE ══ -->
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05a" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05b" defer></script>
 </body>
 </html>

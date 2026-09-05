@@ -30,7 +30,8 @@
     eye:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
     heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
     chat:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
-    send:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'
+    send:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'
   };
 
   function el(tag, cls, text) {
@@ -187,6 +188,34 @@
       (row.location_text || 'Location on map') + ' · ' + timeAgo(row.created_at)));
     meta.appendChild(locTime);
     header.appendChild(meta);
+
+    /* Delete your own report. RLS refuses anyone else's, so this is
+       convenience rather than the actual protection. */
+    if (uid && row.reporter_id === uid) {
+      var del = el('button', 'post-options post-delete');
+      del.type = 'button';
+      del.title = 'Delete this report';
+      del.setAttribute('aria-label', 'Delete this report');
+      del.innerHTML = ICON.trash;
+      del.addEventListener('click', function () {
+        if (!window.confirm('Delete this report? Its photo, likes and comments '
+                          + 'go with it. This cannot be undone.')) return;
+        del.disabled = true;
+        KisaStore.sightings.remove(row.id).then(function () {
+          article.style.transition = 'opacity 0.2s';
+          article.style.opacity = '0';
+          setTimeout(function () {
+            var parent = article.parentNode;
+            article.remove();
+            if (parent && !parent.querySelector('.post')) render(parent);
+          }, 220);
+        }).catch(function (err) {
+          del.disabled = false;
+          window.alert(err.message || 'Could not delete that report.');
+        });
+      });
+      header.appendChild(del);
+    }
     article.appendChild(header);
 
     /* Photo */
