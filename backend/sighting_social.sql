@@ -13,7 +13,11 @@
 create table if not exists public.sighting_likes (
   id          uuid primary key default gen_random_uuid(),
   sighting_id uuid not null references public.sightings(id) on delete cascade,
-  user_id     uuid references auth.users(id) on delete cascade,
+  -- profiles, not auth.users. PostgREST can only embed across a foreign key
+  -- it can see, and auth.users is not in the exposed schema, so pointing
+  -- here is what lets the feed pull the commenter's name in one query.
+  -- profiles.id already cascades from auth.users, so deletes still work.
+  user_id     uuid references public.profiles(id) on delete cascade,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   -- one like per person per sighting
@@ -23,7 +27,7 @@ create table if not exists public.sighting_likes (
 create table if not exists public.sighting_comments (
   id          uuid primary key default gen_random_uuid(),
   sighting_id uuid not null references public.sightings(id) on delete cascade,
-  author_id   uuid references auth.users(id) on delete cascade,
+  author_id   uuid references public.profiles(id) on delete cascade,
   content     text not null check (char_length(trim(content)) between 1 and 1000),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
@@ -87,6 +91,27 @@ create policy "Users can update own sighting comments"
 create policy "Users can delete own sighting comments"
   on public.sighting_comments for delete to authenticated
   using (auth.uid() = author_id);
+
+-- ---------------------------------------------------------------
+-- Repoint the foreign keys for anyone who ran an earlier version of this
+-- file, where they referenced auth.users. Without this the feed cannot
+-- embed the commenter's name and fails with PGRST200. Non-destructive.
+-- ---------------------------------------------------------------
+alter table public.sighting_likes
+  drop constraint if exists sighting_likes_user_id_fkey;
+alter table public.sighting_likes
+  add constraint sighting_likes_user_id_fkey
+  foreign key (user_id) references public.profiles(id) on delete cascade;
+
+alter table public.sighting_comments
+  drop constraint if exists sighting_comments_author_id_fkey;
+alter table public.sighting_comments
+  add constraint sighting_comments_author_id_fkey
+  foreign key (author_id) references public.profiles(id) on delete cascade;
+
+-- PostgREST caches the schema. Tell it to reload so the new relationships
+-- are visible immediately rather than after the next restart.
+notify pgrst, 'reload schema';
 
 -- ---------------------------------------------------------------
 -- Also add the two profile fields the account page already collects but
