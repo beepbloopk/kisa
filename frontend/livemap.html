@@ -549,16 +549,16 @@
       .back-to-top { bottom: 24px; right: 24px; width: 44px; height: 44px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05c">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05c">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05d">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05d">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05c"></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05d"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="assets/js/kisa-map.js?v=2026-09-05c"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05c"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05c" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-05c" defer></script>
+  <script src="assets/js/kisa-map.js?v=2026-09-05d"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05d"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05d" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-05d" defer></script>
 </head>
 <body>
 
@@ -855,6 +855,16 @@
 
     var STATUS_LABEL = { sos: 'SOS', 'needs-care': 'Needs Care', safe: 'Safe' };
     var STATUS_ORDER = { sos: 0, 'needs-care': 1, safe: 2 };
+    var AVATAR_COLOR = { sos: '#2F4156', 'needs-care': '#3a6070', safe: '#567C8D' };
+
+    /* Two letters from the place name, so each card has something to anchor
+       on without inventing a cat name we do not have. */
+    function initialsFor(row) {
+      var t = (row.location_text || '').trim();
+      if (!t) return '?';
+      return t.split(/\s+/).slice(0, 2)
+        .map(function (w) { return w.charAt(0).toUpperCase(); }).join('');
+    }
 
     function timeAgoLabel(iso) {
       var mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -927,21 +937,41 @@
 
       shown.forEach(function (row) {
         var status = statusOf(row);
-        var card = el('button', 'report-card status-' + status);
-        card.type = 'button';
+        /* Uses the page's existing card classes. .report-card is a flex row
+           of avatar plus body, so the text has to sit inside .report-body or
+           it lays out sideways. */
+        var card = el('div', 'report-card status-' + status);
         card.setAttribute('data-id', row.id);
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
 
-        var head = el('div', 'report-card-head');
-        head.appendChild(el('span', 'report-card-title', row.location_text || 'Sighting'));
-        head.appendChild(el('span', 'report-badge badge-' + status, STATUS_LABEL[status]));
-        card.appendChild(head);
+        var avatar = el('div', 'report-avatar', initialsFor(row));
+        avatar.style.background = AVATAR_COLOR[status];
+        card.appendChild(avatar);
 
-        if (row.description) card.appendChild(el('div', 'report-card-note', row.description));
-        card.appendChild(el('div', 'report-card-time', timeAgoLabel(row.created_at)));
+        var body = el('div', 'report-body');
 
-        card.addEventListener('click', function () {
+        var top = el('div', 'report-top-row');
+        top.appendChild(el('span', 'report-name', row.location_text || 'Sighting'));
+        top.appendChild(el('span', 'badge badge-' + status, STATUS_LABEL[status]));
+        body.appendChild(top);
+
+        if (row.description) body.appendChild(el('div', 'report-note', row.description));
+        if (row.taken_in_by) body.appendChild(el('div', 'report-note', 'Taken in by a neighbour.'));
+        body.appendChild(el('div', 'report-time', timeAgoLabel(row.created_at)));
+
+        card.appendChild(body);
+
+        function go() {
+          [].forEach.call(reportsList.querySelectorAll('.report-card'), function (c) {
+            c.classList.remove('active');
+          });
+          card.classList.add('active');
           if (display) display.focus(row.id);
-          mapStage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
         });
         reportsList.appendChild(card);
       });
@@ -1058,6 +1088,6 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05c" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05d" defer></script>
 </body>
 </html>
