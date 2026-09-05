@@ -461,6 +461,44 @@
     .adopted-label svg { width: 10px; height: 10px; }
 
     /* Comment input */
+    /* Feed loading, empty and error states */
+    .feed-status {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-2);
+      font-size: 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--r);
+      background: var(--surface);
+    }
+    .feed-status-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--text); margin-bottom: 6px;
+    }
+    .post-badge-inline { position: static; margin-bottom: 10px; }
+
+    /* Edit and delete on your own comments */
+    .comment-tools { display: flex; gap: 10px; margin-top: 5px; }
+    .comment-tool {
+      background: none; border: none; padding: 0; cursor: pointer;
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      transition: color 0.15s;
+    }
+    .comment-tool:hover { color: var(--accent-2); text-decoration: underline; }
+    .comment-tool-danger:hover { color: #c0504a; }
+    .comment-edit { margin: 6px 0; }
+    .comment-edit-input {
+      width: 100%; min-height: 62px; resize: vertical;
+      font: inherit; font-size: 13px; line-height: 1.5;
+      padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--bg); color: var(--text);
+    }
+    .comment-edit-input:focus {
+      outline: none; border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(86,124,141,0.12);
+    }
+    .comment-edit-actions { display: flex; gap: 10px; margin-top: 6px; }
     .comment-input-row {
       display: flex; gap: 9px; align-items: center;
       padding-top: 12px; border-top: 1px solid var(--border);
@@ -631,12 +669,13 @@
       .back-to-top { bottom: 20px; right: 16px; width: 42px; height: 42px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05a">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05a">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js"></script>
-  <script src="assets/js/kisa-store.js"></script>
-  <script src="assets/js/kisa-auth-ui.js" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05a"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05a"></script>
+  <script src="assets/js/kisa-feed.js?v=2026-09-05a"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05a" defer></script>
 </head>
 <body>
 
@@ -731,472 +770,7 @@
   <section class="feed-section">
     <div class="wrap">
       <div class="feed-wrap">
-        <div class="feed">
-
-          <!-- ─── POST 1: Biscuit (Safe) ─── -->
-          <article class="post">
-            <div class="post-header">
-              <div class="post-avatar" style="background:rgba(200,217,230,0.45);">NK</div>
-              <div class="post-meta">
-                <div class="post-reporter">Nadia K.</div>
-                <div class="post-location-time">
-                  <i data-lucide="map-pin"></i>
-                  <span>Old Market Quarter · 2 hours ago</span>
-                </div>
-              </div>
-              <button class="post-options" aria-label="Options">
-                <i data-lucide="more-horizontal" style="width:18px;height:18px;"></i>
-              </button>
-            </div>
-
-            <div class="post-image">
-              <img src="https://plus.unsplash.com/premium_photo-1667099522743-6b233d408465?w=800&auto=format&fit=crop&q=70"
-                   alt="Biscuit, orange tabby cat" loading="lazy"
-                   onerror="this.parentElement.style.background='var(--accent-sky)'">
-              <div class="post-img-badge">
-                <span class="badge badge-safe">Safe</span>
-              </div>
-            </div>
-
-            <div class="post-body">
-              <span class="post-cat-name">Biscuit</span>
-              <div class="post-details">
-                <div class="post-detail-row">
-                  <i data-lucide="map-pin"></i>
-                  <span>Old market entrance, near the morning bakery</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="clock"></i>
-                  <span>Spotted today at 1:15 PM</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="eye"></i>
-                  <span>4 community sightings</span>
-                </div>
-              </div>
-              <div class="post-chips">
-                <span class="chip">Orange tabby</span>
-                <span class="chip">Male</span>
-                <span class="chip">~3 yrs</span>
-                <span class="chip chip-behavior">Friendly</span>
-                <span class="chip chip-behavior">Hungry</span>
-                <span class="chip">Faded collar</span>
-              </div>
-              <p class="post-desc">
-                Friendly ginger tom who followed me for half a block. Looks healthy overall but was clearly hungry today. Has a faded collar, might have an owner somewhere. Very trusting of people, came right up to me without hesitation.
-              </p>
-            </div>
-
-            <div class="post-actions">
-              <button class="action-btn" onclick="toggleLike(this)" aria-label="Like">
-                <i data-lucide="heart" style="width:17px;height:17px;"></i>
-                <span>24</span>
-              </button>
-              <button class="action-btn" onclick="toggleComments(this)" aria-label="Comments">
-                <i data-lucide="message-circle" style="width:17px;height:17px;"></i>
-                <span>3</span>
-              </button>
-              <div class="action-spacer"></div>
-              <button class="btn-adopt" onclick="openAdoptModal(this)">
-                <i data-lucide="home" style="width:14px;height:14px;"></i>
-                I've taken them in!
-              </button>
-            </div>
-
-            <div class="post-comments" style="display:none;">
-              <div class="comments-list">
-                <div class="comment">
-                  <div class="comment-avatar">PS</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Priya S.</div>
-                    <div class="comment-text">I see him every morning near the bakery! He's a regular there. The owner moved away months ago. He has been on his own since.</div>
-                    <div class="comment-time">1 hour ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">AM</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Dr. Amira M.</div>
-                    <div class="comment-text">That collar style is from the vet clinic on Grove St. He is almost certainly vaccinated. I can check him over if anyone can bring him in this week.</div>
-                    <div class="comment-time">45 minutes ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">RJ</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Ravi J.</div>
-                    <div class="comment-text">I'll put out food for him tonight. Poor boy.</div>
-                    <div class="comment-time">20 minutes ago</div>
-                  </div>
-                </div>
-              </div>
-              <div class="comment-input-row">
-                <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
-                <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
-                  <i data-lucide="send" style="width:13px;height:13px;"></i>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <!-- ─── POST 2: Luna (Needs Care) ─── -->
-          <article class="post">
-            <div class="post-header">
-              <div class="post-avatar" style="background:rgba(86,124,141,0.18);">MB</div>
-              <div class="post-meta">
-                <div class="post-reporter">Marco B.</div>
-                <div class="post-location-time">
-                  <i data-lucide="map-pin"></i>
-                  <span>Community Garden, Elm Road · 5 hours ago</span>
-                </div>
-              </div>
-              <button class="post-options" aria-label="Options">
-                <i data-lucide="more-horizontal" style="width:18px;height:18px;"></i>
-              </button>
-            </div>
-
-            <div class="post-image">
-              <img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=800&auto=format&fit=crop&q=70"
-                   alt="Luna, grey tabby cat" loading="lazy"
-                   onerror="this.parentElement.style.background='var(--accent-sky)'">
-              <div class="post-img-badge">
-                <span class="badge badge-needs-care">Needs Care</span>
-              </div>
-            </div>
-
-            <div class="post-body">
-              <span class="post-cat-name">Luna</span>
-              <div class="post-details">
-                <div class="post-detail-row">
-                  <i data-lucide="map-pin"></i>
-                  <span>Behind the community garden shed, Elm Road</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="clock"></i>
-                  <span>Spotted today at 10:30 AM</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="eye"></i>
-                  <span>2 community sightings</span>
-                </div>
-              </div>
-              <div class="post-chips">
-                <span class="chip">Grey tabby</span>
-                <span class="chip">Female</span>
-                <span class="chip">~2 yrs</span>
-                <span class="chip chip-behavior">Shy</span>
-                <span class="chip chip-behavior">Possibly pregnant</span>
-                <span class="chip">Seeking shelter</span>
-              </div>
-              <p class="post-desc">
-                Found this shy grey cat hiding under the garden shed. She will not come near people but may be pregnant. Her belly looks rounded. Left food out for her. She needs warmth and a vet check soon. Please reach out if you can help safely trap her.
-              </p>
-            </div>
-
-            <div class="post-actions">
-              <button class="action-btn" onclick="toggleLike(this)" aria-label="Like">
-                <i data-lucide="heart" style="width:17px;height:17px;"></i>
-                <span>18</span>
-              </button>
-              <button class="action-btn" onclick="toggleComments(this)" aria-label="Comments">
-                <i data-lucide="message-circle" style="width:17px;height:17px;"></i>
-                <span>4</span>
-              </button>
-              <div class="action-spacer"></div>
-              <button class="btn-adopt" onclick="openAdoptModal(this)">
-                <i data-lucide="home" style="width:14px;height:14px;"></i>
-                I've taken them in!
-              </button>
-            </div>
-
-            <div class="post-comments" style="display:none;">
-              <div class="comments-list">
-                <div class="comment">
-                  <div class="comment-avatar">RT</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Rina T.</div>
-                    <div class="comment-text">I can drop a shelter box by the garden this evening. I have one from the last TNR colony I helped with.</div>
-                    <div class="comment-time">3 hours ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">KM</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Kira M.</div>
-                    <div class="comment-text">Is she still there? I'd like to try trapping her humanely and taking her to the vet for a checkup. I've done TNR work before and have all the equipment.</div>
-                    <div class="comment-time">2 hours ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">MB</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Marco B.</div>
-                    <div class="comment-text">Yes, still there as of an hour ago! @Kira please go for it. I'll be around until 6 PM to assist.</div>
-                    <div class="comment-time">1 hour ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">SL</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Sara L.</div>
-                    <div class="comment-text">Shared in the local rescue group. Someone may be able to foster her and any kittens.</div>
-                    <div class="comment-time">30 minutes ago</div>
-                  </div>
-                </div>
-              </div>
-              <div class="comment-input-row">
-                <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
-                <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
-                  <i data-lucide="send" style="width:13px;height:13px;"></i>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <!-- ─── POST 3: Captain (SOS) ─── -->
-          <article class="post">
-            <div class="post-header">
-              <div class="post-avatar" style="background:rgba(47,65,86,0.13);">YA</div>
-              <div class="post-meta">
-                <div class="post-reporter">Yusuf A.</div>
-                <div class="post-location-time">
-                  <i data-lucide="map-pin"></i>
-                  <span>Maple St & 3rd Ave · Yesterday, 6:30 PM</span>
-                </div>
-              </div>
-              <button class="post-options" aria-label="Options">
-                <i data-lucide="more-horizontal" style="width:18px;height:18px;"></i>
-              </button>
-            </div>
-
-            <div class="post-image">
-              <img src="https://images.unsplash.com/photo-1577023311546-cdc07a8454d9?w=800&auto=format&fit=crop&q=70"
-                   alt="Captain, black and white cat" loading="lazy"
-                   onerror="this.parentElement.style.background='var(--accent-sky)'">
-              <div class="post-img-badge">
-                <span class="badge badge-sos">SOS</span>
-              </div>
-              <div class="post-sos-banner">
-                <i data-lucide="alert-circle" style="width:15px;height:15px;color:#fff;flex-shrink:0;"></i>
-                <span class="post-sos-text">Injured, urgent help needed</span>
-              </div>
-            </div>
-
-            <div class="post-body">
-              <span class="post-cat-name">Captain</span>
-              <div class="post-details">
-                <div class="post-detail-row">
-                  <i data-lucide="map-pin"></i>
-                  <span>Maple St & 3rd Ave intersection, under parked cars</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="clock"></i>
-                  <span>Spotted yesterday at 6:30 PM</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="check-circle"></i>
-                  <span>UPDATE: Rescue team is on the way</span>
-                </div>
-              </div>
-              <div class="post-chips">
-                <span class="chip">Black & white</span>
-                <span class="chip">Male</span>
-                <span class="chip">~5 yrs</span>
-                <span class="chip chip-behavior">Injured front paw</span>
-                <span class="chip chip-behavior">Limping badly</span>
-                <span class="chip">Hiding</span>
-              </div>
-              <p class="post-desc">
-                Saw this boy limping badly on his front left paw near the intersection. He was hiding under a parked car and couldn't put weight on it. Managed to leave food nearby but couldn't catch him. He needs urgent veterinary care. Please help if you are in the area!
-              </p>
-            </div>
-
-            <div class="post-actions">
-              <button class="action-btn liked" onclick="toggleLike(this)" aria-label="Like">
-                <i data-lucide="heart" style="width:17px;height:17px;"></i>
-                <span>47</span>
-              </button>
-              <button class="action-btn" onclick="toggleComments(this)" aria-label="Comments">
-                <i data-lucide="message-circle" style="width:17px;height:17px;"></i>
-                <span>5</span>
-              </button>
-              <div class="action-spacer"></div>
-              <button class="btn-adopt" onclick="openAdoptModal(this)">
-                <i data-lucide="home" style="width:14px;height:14px;"></i>
-                I've taken them in!
-              </button>
-            </div>
-
-            <div class="post-comments" style="display:none;">
-              <div class="comments-list">
-                <div class="comment">
-                  <div class="comment-avatar">SR</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Sofia R.</div>
-                    <div class="comment-text">I'm a vet technician. If you can safely trap him, I can check his paw for free this weekend. DM me through the app.</div>
-                    <div class="comment-time">18 hours ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">TJ</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Tariq J.</div>
-                    <div class="comment-text">Posted in our local WhatsApp group too. More eyes on it now. Fingers crossed someone nearby can help soon.</div>
-                    <div class="comment-time">16 hours ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">LB</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Lena B.</div>
-                    <div class="comment-text">I drive past there every morning on my way to work. I'll keep an eye out and leave food every day until he's found.</div>
-                    <div class="comment-time">12 hours ago</div>
-                  </div>
-                </div>
-                <div class="comment adoption-comment">
-                  <div class="comment-avatar" style="background:var(--adopt-bg);color:var(--adopt-green);">YA</div>
-                  <div class="comment-body">
-                    <div class="adopted-label">
-                      <i data-lucide="check-circle" style="width:10px;height:10px;"></i>
-                      UPDATE
-                    </div>
-                    <div class="comment-text">He's been safely caught by the local rescue team! Taking him to the clinic now to get that paw seen to. Thank you all so much for your help.</div>
-                    <div class="comment-time">8 hours ago · Yusuf A.</div>
-                  </div>
-                </div>
-              </div>
-              <div class="comment-input-row">
-                <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
-                <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
-                  <i data-lucide="send" style="width:13px;height:13px;"></i>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <!-- ─── POST 4: Mochi (Reunited) ─── -->
-          <article class="post">
-            <div class="post-header">
-              <div class="post-avatar" style="background:rgba(200,217,230,0.5);">JW</div>
-              <div class="post-meta">
-                <div class="post-reporter">Jasmine W.</div>
-                <div class="post-location-time">
-                  <i data-lucide="map-pin"></i>
-                  <span>Riverside Park · 3 days ago</span>
-                </div>
-              </div>
-              <button class="post-options" aria-label="Options">
-                <i data-lucide="more-horizontal" style="width:18px;height:18px;"></i>
-              </button>
-            </div>
-
-            <div class="post-image">
-              <img src="https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=800&auto=format&fit=crop&q=70"
-                   alt="Mochi, calico cat" loading="lazy"
-                   onerror="this.parentElement.style.background='var(--accent-sky)'">
-              <div class="post-img-badge">
-                <span class="badge badge-adopted">Reunited</span>
-              </div>
-            </div>
-
-            <div class="post-body">
-              <span class="post-cat-name">Mochi</span>
-              <div class="post-details">
-                <div class="post-detail-row">
-                  <i data-lucide="map-pin"></i>
-                  <span>Riverside Park, near the fountain (east entrance)</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="clock"></i>
-                  <span>Originally spotted 3 days ago</span>
-                </div>
-                <div class="post-detail-row">
-                  <i data-lucide="heart"></i>
-                  <span>Reunited with owner. Community helped!</span>
-                </div>
-              </div>
-              <div class="post-chips">
-                <span class="chip">Calico</span>
-                <span class="chip">Female</span>
-                <span class="chip">~1 yr</span>
-                <span class="chip chip-behavior">Very friendly</span>
-                <span class="chip chip-behavior">Indoor cat</span>
-                <span class="chip">Vaccinated</span>
-                <span class="chip">Microchipped</span>
-              </div>
-              <p class="post-desc">
-                The sweetest calico kitten! Purrs immediately on contact, completely comfortable with strangers. She seems like a lost indoor cat. Too trusting and well-groomed to be a true stray. Please check lost pet listings if she looks familiar to anyone!
-              </p>
-            </div>
-
-            <div class="post-actions">
-              <button class="action-btn liked" onclick="toggleLike(this)" aria-label="Like">
-                <i data-lucide="heart" style="width:17px;height:17px;"></i>
-                <span>62</span>
-              </button>
-              <button class="action-btn" onclick="toggleComments(this)" aria-label="Comments">
-                <i data-lucide="message-circle" style="width:17px;height:17px;"></i>
-                <span>7</span>
-              </button>
-              <div class="action-spacer"></div>
-              <button class="btn-adopt resolved" disabled aria-label="Already reunited">
-                <i data-lucide="check" style="width:14px;height:14px;"></i>
-                Reunited!
-              </button>
-            </div>
-
-            <div class="post-comments" style="display:none;">
-              <div class="comments-list">
-                <div class="comment">
-                  <div class="comment-avatar">JP</div>
-                  <div class="comment-body">
-                    <div class="comment-author">James P.</div>
-                    <div class="comment-text">She has been hanging around the park for 3 days. I have been feeding her. She sleeps under the big oak tree near the east gate.</div>
-                    <div class="comment-time">2 days ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">AC</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Aly C.</div>
-                    <div class="comment-text">Posted in the local lost pets Facebook group and NextDoor! Fingers crossed her family sees it.</div>
-                    <div class="comment-time">2 days ago</div>
-                  </div>
-                </div>
-                <div class="comment">
-                  <div class="comment-avatar">DH</div>
-                  <div class="comment-body">
-                    <div class="comment-author">Dr. Hassan</div>
-                    <div class="comment-text">She's microchipped! Scanned her at my clinic. Trying to reach the registered owner now. The chip details are current.</div>
-                    <div class="comment-time">1 day ago</div>
-                  </div>
-                </div>
-                <div class="comment adoption-comment">
-                  <div class="comment-avatar" style="background:var(--adopt-bg);color:var(--adopt-green);">JW</div>
-                  <div class="comment-body">
-                    <div class="adopted-label">
-                      <i data-lucide="home" style="width:10px;height:10px;"></i>
-                      REUNITED
-                    </div>
-                    <div class="comment-text">She found her family! They saw this Kisa post and came straight to the park. Mochi is home safe and sound. Thank you all. This community is incredible.</div>
-                    <div class="comment-time">1 day ago · Jasmine W.</div>
-                  </div>
-                </div>
-              </div>
-              <div class="comment-input-row">
-                <div class="comment-avatar" style="font-size:10px;">You</div>
-                <input type="text" class="comment-input" placeholder="Add a comment…" aria-label="Add a comment">
-                <button class="comment-send-btn" onclick="postComment(this)" aria-label="Send comment">
-                  <i data-lucide="send" style="width:13px;height:13px;"></i>
-                </button>
-              </div>
-            </div>
-          </article>
-
-        </div><!-- /feed -->
+        <div class="feed" id="feed"></div>
       </div><!-- /feed-wrap -->
     </div><!-- /wrap -->
   </section>
@@ -1353,35 +927,8 @@
   });
 
   /* ── Like toggle ── */
-  function toggleLike(btn) {
-    var isLiked = btn.classList.contains('liked');
-    var countEl = btn.querySelector('span');
-    var count = parseInt(countEl.textContent) || 0;
-    if (isLiked) {
-      btn.classList.remove('liked');
-      countEl.textContent = count - 1;
-    } else {
-      btn.classList.add('liked', 'like-pop');
-      setTimeout(function() { btn.classList.remove('like-pop'); }, 420);
-      countEl.textContent = count + 1;
-    }
-  }
 
   /* ── Comments toggle ── */
-  function toggleComments(btn) {
-    var post = btn.closest('.post');
-    var comments = post.querySelector('.post-comments');
-    if (!comments) return;
-    var isOpen = comments.style.display !== 'none';
-    comments.style.display = isOpen ? 'none' : 'block';
-    if (!isOpen) {
-      renderIcons();
-      setTimeout(function() {
-        var input = comments.querySelector('.comment-input');
-        if (input) input.focus();
-      }, 50);
-    }
-  }
 
   /* ── Bind Enter key on comment inputs ── */
   function bindCommentInputs() {
@@ -1397,34 +944,6 @@
   }
 
   /* ── Post comment ── */
-  function postComment(sendBtn) {
-    var row = sendBtn.closest('.comment-input-row');
-    var input = row.querySelector('.comment-input');
-    var text = (input.value || '').trim();
-    if (!text) return;
-
-    var commentsList = sendBtn.closest('.post-comments').querySelector('.comments-list');
-    var newComment = document.createElement('div');
-    newComment.className = 'comment';
-    newComment.style.animation = 'fadeInComment 0.25s ease';
-    newComment.innerHTML =
-      '<div class="comment-avatar" style="font-size:10px;">You</div>' +
-      '<div class="comment-body">' +
-        '<div class="comment-author">You</div>' +
-        '<div class="comment-text">' + escapeHtml(text) + '</div>' +
-        '<div class="comment-time">Just now</div>' +
-      '</div>';
-    commentsList.appendChild(newComment);
-
-    /* Bump comment count in action bar */
-    var post = sendBtn.closest('.post');
-    var cmtBtn = post.querySelector('.action-btn[aria-label="Comments"] span');
-    if (cmtBtn) cmtBtn.textContent = parseInt(cmtBtn.textContent) + 1;
-
-    input.value = '';
-    renderIcons();
-    newComment.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
 
   /* ── Adopt modal ── */
   var _activeAdoptBtn = null;
@@ -1564,6 +1083,14 @@
 
 
 
-<script src="assets/js/kisa-modal.js" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05a" defer></script>
+
+<script>
+/* The feed is rendered from the database. kisa-feed.js owns the markup and
+   its own event handlers, so nothing here uses inline onclick. */
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.KisaFeed) KisaFeed.render(document.getElementById('feed'));
+});
+</script>
 </body>
 </html>

@@ -306,6 +306,67 @@
         .eq('reporter_id', userId)
         .order('created_at', { ascending: false })
         .then(function (r) { if (r.error) throw fail(r.error); return r.data || []; });
+    },
+
+    /* The community feed reads sightings directly, so likes and comments hang
+       off sightings rather than posts. One request pulls the sighting, its
+       photos, who reported it, and every like and comment. */
+    listFeed: function (limit) {
+      return sb().from('sightings')
+        .select('id, condition, location_text, sighted_date, sighted_time, created_at, ' +
+                'coat_color, gender, age_group, behaviour, number_of_cats, description, ' +
+                'match_status, reporter_id, cat_id, ' +
+                'sighting_images(storage_path), ' +
+                'profiles:reporter_id(display_name, avatar_url), ' +
+                'sighting_likes(user_id), ' +
+                'sighting_comments(id, content, created_at, updated_at, author_id, ' +
+                                  'profiles:author_id(display_name))')
+        .order('created_at', { ascending: false })
+        .limit(limit || 30)
+        .then(function (r) {
+          if (r.error) throw fail(r.error);
+          return r.data || [];
+        });
+    },
+
+    like: function (sightingId) {
+      return requireUserId().then(function (uid) {
+        return sb().from('sighting_likes')
+          .insert({ sighting_id: sightingId, user_id: uid });
+      }).then(function (r) { if (r.error) throw fail(r.error); });
+    },
+
+    unlike: function (sightingId) {
+      return requireUserId().then(function (uid) {
+        return sb().from('sighting_likes').delete()
+          .eq('sighting_id', sightingId).eq('user_id', uid);
+      }).then(function (r) { if (r.error) throw fail(r.error); });
+    },
+
+    addComment: function (sightingId, content) {
+      return requireUserId().then(function (uid) {
+        return sb().from('sighting_comments')
+          .insert({ sighting_id: sightingId, author_id: uid, content: content })
+          .select('id, content, created_at, updated_at, author_id, ' +
+                  'profiles:author_id(display_name)')
+          .single();
+      }).then(function (r) { if (r.error) throw fail(r.error); return r.data; });
+    },
+
+    /* RLS restricts both of these to your own rows, so a tampered id fails
+       at the database rather than relying on the UI hiding the buttons. */
+    updateComment: function (commentId, content) {
+      return sb().from('sighting_comments')
+        .update({ content: content })
+        .eq('id', commentId)
+        .select('id, content, created_at, updated_at, author_id')
+        .single()
+        .then(function (r) { if (r.error) throw fail(r.error); return r.data; });
+    },
+
+    deleteComment: function (commentId) {
+      return sb().from('sighting_comments').delete().eq('id', commentId)
+        .then(function (r) { if (r.error) throw fail(r.error); });
     }
   };
 
