@@ -1,0 +1,118 @@
+/* Kisa: map picker built on Leaflet.
+ *
+ * sightings.location is a PostGIS geography column and NOT NULL, so a report
+ * cannot be saved without real coordinates. The old map was a decorative div
+ * that toggled a CSS class and produced nothing.
+ *
+ * Load after Leaflet:
+ *   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+ *   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ *   <script src="assets/js/kisa-map.js"></script>
+ *
+ * The marker is a CSS divIcon, not Leaflet's default PNG. That image would be
+ * fetched from unpkg, which img-src does not allow, and widening the policy
+ * for a pin shape is not worth it.
+ */
+(function (global) {
+  'use strict';
+
+  var TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+  /* Roughly central London. Only used until the visitor picks a point or
+     their browser offers a real location. */
+  var FALLBACK = [51.5074, -0.1278];
+
+  function pinIcon() {
+    return global.L.divIcon({
+      className: 'kisa-pin',
+      html: '<span class="kisa-pin-dot"></span><span class="kisa-pin-pulse"></span>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+  }
+
+  /* Nominatim asks that callers identify themselves and do not hammer it.
+     One lookup per pin drop is well inside their usage policy. */
+  function reverseGeocode(lat, lng) {
+    var url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&lat=' +
+              encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+    return fetch(url, { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return (d && d.display_name) || null; })
+      .catch(function () { return null; });
+  }
+
+  function createPicker(container, opts) {
+    opts = opts || {};
+    if (!global.L) throw new Error('Leaflet has not loaded.');
+
+    /* The placeholder markup lives inside the same element; clear it so the
+       decorative grid and "coming soon" label do not show through the map. */
+    container.innerHTML = '';
+    container.classList.add('kisa-map');
+
+    var map = global.L.map(container, {
+      center: opts.center || FALLBACK,
+      zoom: opts.zoom || 13,
+      scrollWheelZoom: false,   /* so the page still scrolls over the map */
+      attributionControl: true
+    });
+
+    global.L.tileLayer(TILES, { attribution: ATTRIB, maxZoom: 19 }).addTo(map);
+
+    /* Scroll wheel zoom only once the map has been clicked, so scrolling the
+       page does not get hijacked the moment the cursor passes over it. */
+    map.on('focus', function () { map.scrollWheelZoom.enable(); });
+    map.on('blur', function () { map.scrollWheelZoom.disable(); });
+
+    var marker = null;
+    var point = null;
+
+    function place(lat, lng, quiet) {
+      point = { lat: lat, lng: lng };
+      if (!marker) {
+        marker = global.L.marker([lat, lng], {
+          icon: pinIcon(), draggable: true, keyboard: true,
+          title: 'Sighting location, drag to adjust'
+        }).addTo(map);
+        marker.on('dragend', function () {
+          var p = marker.getLatLng();
+          place(p.lat, p.lng);
+        });
+      } else {
+        marker.setLatLng([lat, lng]);
+      }
+      container.classList.add('has-pin');
+      if (!quiet && typeof opts.onPick === 'function') opts.onPick(lat, lng);
+    }
+
+    map.on('click', function (e) { place(e.latlng.lat, e.latlng.lng); });
+
+    /* Leaflet measures the container on creation. If it was hidden or still
+       being laid out, it reads zero and renders a grey box until told again. */
+    setTimeout(function () { map.invalidateSize(); }, 200);
+
+    return {
+      map: map,
+      getPoint: function () { return point; },
+      setPoint: function (lat, lng, o) {
+        o = o || {};
+        place(lat, lng, o.quiet);
+        if (o.pan !== false) map.setView([lat, lng], Math.max(map.getZoom(), 16));
+      },
+      clear: function () {
+        if (marker) { map.removeLayer(marker); marker = null; }
+        point = null;
+        container.classList.remove('has-pin');
+      },
+      invalidate: function () { map.invalidateSize(); }
+    };
+  }
+
+  global.KisaMap = {
+    createPicker: createPicker,
+    reverseGeocode: reverseGeocode,
+    FALLBACK: FALLBACK
+  };
+})(window);

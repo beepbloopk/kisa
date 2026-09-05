@@ -447,6 +447,17 @@
       padding-right: 36px; cursor: pointer;
     }
     .form-hint { font-size: 12px; color: var(--text-3); margin-top: 5px; line-height: 1.5; }
+    .submit-error {
+      background: rgba(214, 69, 69, 0.10);
+      border: 1px solid rgba(214, 69, 69, 0.35);
+      color: #b23b3b;
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    @media (prefers-color-scheme: dark) { .submit-error { color: #e88; } }
     .form-error-msg {
       font-size: 12px; color: #b03030;
       margin-top: 5px; display: none; align-items: center; gap: 5px;
@@ -745,7 +756,10 @@
   <link rel="stylesheet" href="assets/css/kisa-ui.css">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="assets/js/kisa-config.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="assets/js/kisa-store.js"></script>
+  <script src="assets/js/kisa-map.js"></script>
   <script src="assets/js/kisa-auth-ui.js" defer></script>
 </head>
 <body>
@@ -951,6 +965,10 @@
                 <span class="map-pin-dropped-sub">Location recorded. Click to reposition</span>
               </div>
             </div>
+            <div class="form-error-msg" id="err-map">
+              <i data-lucide="alert-circle" style="width:13px;height:13px;"></i>
+              Click the map to mark where you saw the cat.
+            </div>
           </div>
 
           <div class="form-divider"></div>
@@ -1123,6 +1141,7 @@
             </div>
 
             <div class="form-actions">
+              <div class="submit-error" id="submitError" role="alert" style="display:none;"></div>
               <button type="submit" class="btn btn-primary" id="submitBtn">
                 Submit Sighting
                 <span class="btn-arrow">
@@ -1503,17 +1522,52 @@
     });
   })();
 
-  /* ── Map pin placeholder ── */
+  /* ── Map picker ──
+     Holds the coordinates the sighting cannot be saved without. */
+  var kisaPicker = null;
   (function () {
     var area = document.getElementById('mapArea');
-    if (!area) return;
-    function toggle() {
-      area.classList.toggle('pinned');
-    }
-    area.addEventListener('click', toggle);
-    area.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    if (!area || !window.KisaMap) return;
+
+    /* It was a fake button before; it is a map now. */
+    area.removeAttribute('role');
+    area.removeAttribute('tabindex');
+    area.removeAttribute('aria-label');
+
+    var hint  = document.getElementById('locationHint');
+    var input = document.getElementById('sighting-location');
+
+    kisaPicker = KisaMap.createPicker(area, {
+      onPick: function (lat, lng) {
+        var err = document.getElementById('err-map');
+        if (err) err.classList.remove('show');
+        if (hint) {
+          hint.textContent = 'Pin set at ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+          hint.style.display = 'block';
+        }
+        /* Fill the address box from the pin, but never overwrite something
+           the reporter typed themselves. */
+        if (input && !input.value.trim()) {
+          KisaMap.reverseGeocode(lat, lng).then(function (name) {
+            if (name && !input.value.trim()) {
+              input.value = name;
+              clearErr(input, 'err-location');
+            }
+          });
+        }
+      }
     });
+
+    /* Centre on the visitor if they allow it. This only moves the view, it
+       does not drop a pin: where the cat was seen is not necessarily where
+       the reporter is standing now. */
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        if (kisaPicker && !kisaPicker.getPoint()) {
+          kisaPicker.map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+        }
+      }, function () {}, { timeout: 6000, maximumAge: 600000 });
+    }
   })();
 
   /* ── Detect Location ── */
@@ -1537,6 +1591,11 @@
         function (pos) {
           var lat = pos.coords.latitude.toFixed(5);
           var lng = pos.coords.longitude.toFixed(5);
+          /* Drop the pin too. Before, these coordinates were shown in a hint
+             and then thrown away, so the sighting had no location to save. */
+          if (kisaPicker) kisaPicker.setPoint(pos.coords.latitude, pos.coords.longitude, { quiet: true });
+          var mapErr = document.getElementById('err-map');
+          if (mapErr) mapErr.classList.remove('show');
           /* Try reverse geocode via free nominatim */
           fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng)
             .then(function (r) { return r.json(); })
@@ -1633,6 +1692,16 @@
       if (!loc.value.trim()){ showErr(loc, 'err-location'); ok = false; }
       else                  { clearErr(loc, 'err-location'); }
 
+      /* The database will reject a sighting with no location, so catch it
+         here with a message that says what to do about it. */
+      var mapErr = getEl('err-map');
+      if (!kisaPicker || !kisaPicker.getPoint()) {
+        if (mapErr) mapErr.classList.add('show');
+        ok = false;
+      } else if (mapErr) {
+        mapErr.classList.remove('show');
+      }
+
       var statusChk = document.querySelector('input[name="cat_status"]:checked');
       var errStatus = getEl('err-status');
       if (!statusChk) {
@@ -1709,12 +1778,94 @@
       if (!validate()) return;
 
       var statusEl = document.querySelector('input[name="cat_status"]:checked');
-      revealSuccess({
-        datetime: getEl('sighting-datetime').value,
-        location: getEl('sighting-location').value,
-        status:   statusEl ? statusEl.value : '',
-        coat:     getEl('cat-coat').value
-      });
+      var genderEl = document.querySelector('input[name="gender"]:checked');
+      var point    = kisaPicker.getPoint();
+      var dtValue  = getEl('sighting-datetime').value;   /* "2026-09-05T14:30" */
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var originalBtn = submitBtn ? submitBtn.innerHTML : '';
+
+      function stopLoading() {
+        if (!submitBtn) return;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtn;
+        if (window.lucide) lucide.createIcons();
+      }
+      function showFormError(msg) {
+        stopLoading();
+        var box = document.getElementById('submitError');
+        if (box) {
+          box.textContent = msg;
+          box.style.display = 'block';
+          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.alert(msg);
+        }
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+      }
+      var errBox = document.getElementById('submitError');
+      if (errBox) errBox.style.display = 'none';
+
+      /* age_group is NOT NULL with a CHECK constraint, and the dropdown's
+         default is an empty string, so it has to become 'unknown'. */
+      var age = getEl('cat-age').value || 'unknown';
+
+      KisaStore.auth.getUser()
+        .then(function (user) {
+          if (!user) {
+            location.href = 'login.html?next=report.html';
+            throw new Error('redirecting');
+          }
+          return KisaStore.sightings.create({
+            lat: point.lat,
+            lng: point.lng,
+            locationText:      getEl('sighting-location').value.trim(),
+            /* sighted_date and sighted_time are separate columns. */
+            sightedDate:       dtValue.slice(0, 10),
+            sightedTime:       dtValue.slice(11, 16) || null,
+            condition:         statusEl ? statusEl.value : null,
+            coatColor:         getEl('cat-coat').value.trim() || null,
+            gender:            genderEl ? genderEl.value : null,
+            ageGroup:          age,
+            behaviour:         getEl('cat-behaviour').value.trim() || null,
+            numberOfCats:      parseInt(getEl('cat-count').value, 10) || 1,
+            description:       getEl('notes').value.trim() || null,
+            contactPreference: getEl('contact-pref').value.trim() || null
+          });
+        })
+        .then(function (sighting) {
+          /* Upload the photo after the row exists, so it can be attached to a
+             real sighting id. A failed upload must not lose the report. */
+          var file = getEl('photoInput').files[0];
+          if (!file) return sighting;
+          return KisaStore.sightings.addPhoto(sighting.id, file)
+            .then(function () { return sighting; })
+            .catch(function () {
+              window.setTimeout(function () {
+                window.alert('Your sighting was saved, but the photo could not be '
+                           + 'uploaded. You can add it later from your reports.');
+              }, 600);
+              return sighting;
+            });
+        })
+        .then(function () {
+          stopLoading();
+          revealSuccess({
+            datetime: dtValue,
+            location: getEl('sighting-location').value,
+            status:   statusEl ? statusEl.value : '',
+            coat:     getEl('cat-coat').value
+          });
+        })
+        .catch(function (err) {
+          if (err && err.message === 'redirecting') return;
+          showFormError(err && err.message
+            ? err.message
+            : 'Something went wrong saving your sighting. Please try again.');
+        });
     });
 
     /* "Report Another" resets everything */
