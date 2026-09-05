@@ -369,6 +369,43 @@
         .then(function (r) { if (r.error) throw fail(r.error); });
     },
 
+    /* The map needs plain lat/lng, which the geography column does not give
+       directly. sightings_map is a view that exposes them, running as the
+       caller so the same RLS applies. */
+    listForMap: function (limit) {
+      return sb().from('sightings_map')
+        .select('id, condition, location_text, sighted_date, sighted_time, created_at, ' +
+                'description, coat_color, gender, age_group, number_of_cats, ' +
+                'reporter_id, taken_in_by, taken_in_at, lat, lng')
+        .not('lat', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(limit || 200)
+        .then(function (r) { if (r.error) throw fail(r.error); return r.data || []; });
+    },
+
+    /* Anyone signed in can mark a cat as taken in, because the person who
+       ends up housing it is often not the one who reported it. This goes
+       through an RPC because an RLS policy permissive enough to let a
+       stranger set taken_in_by would also let them rewrite the whole row. */
+    markTakenIn: function (sightingId, note) {
+      return sb().rpc('mark_taken_in', { p_sighting_id: sightingId, p_note: note || null })
+        .then(function (r) {
+          if (r.error) {
+            var m = r.error.message || '';
+            if (/could not find|does not exist|schema cache/i.test(m)) {
+              throw new Error('This needs one more setup step: run ' +
+                              'backend/map_and_rescue.sql in Supabase.');
+            }
+            throw fail(r.error);
+          }
+        });
+    },
+
+    undoTakenIn: function (sightingId) {
+      return sb().rpc('undo_taken_in', { p_sighting_id: sightingId })
+        .then(function (r) { if (r.error) throw fail(r.error); });
+    },
+
     /* Delete a report. The sighting_images, likes and comments rows cascade,
        but the uploaded files in storage do not, so remove those first. RLS
        limits this to your own sightings. */

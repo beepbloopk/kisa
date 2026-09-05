@@ -110,8 +110,85 @@
     };
   }
 
+  /* ---------------------------------------------------------------
+     Display map: many pins, none of them draggable. Used by the live map
+     page, where the job is showing what has been reported rather than
+     choosing a spot.
+     --------------------------------------------------------------- */
+  function createDisplay(container, opts) {
+    opts = opts || {};
+    if (!global.L) throw new Error('Leaflet has not loaded.');
+
+    container.innerHTML = '';
+    container.classList.add('kisa-map', 'kisa-map-display');
+
+    var map = global.L.map(container, {
+      center: opts.center || FALLBACK,
+      zoom: opts.zoom || 13,
+      scrollWheelZoom: false,
+      attributionControl: true
+    });
+    global.L.tileLayer(TILES, { attribution: ATTRIB, maxZoom: 19 }).addTo(map);
+    map.on('focus', function () { map.scrollWheelZoom.enable(); });
+    map.on('blur', function () { map.scrollWheelZoom.disable(); });
+
+    var layer = global.L.layerGroup().addTo(map);
+    var markers = [];
+
+    function conditionIcon(condition, takenIn) {
+      var cls = 'kisa-pin kisa-pin-' + (takenIn ? 'safe' : (condition || 'healthy'));
+      return global.L.divIcon({
+        className: cls,
+        html: '<span class="kisa-pin-dot"></span>',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+    }
+
+    function show(rows) {
+      layer.clearLayers();
+      markers = [];
+      rows.forEach(function (row) {
+        if (typeof row.lat !== 'number' || typeof row.lng !== 'number') return;
+        var m = global.L.marker([row.lat, row.lng], {
+          icon: conditionIcon(row.condition, row.taken_in_by),
+          title: row.location_text || 'Reported sighting'
+        });
+        if (typeof opts.popup === 'function') {
+          m.bindPopup(opts.popup(row), { closeButton: true, maxWidth: 260 });
+        }
+        m.addTo(layer);
+        markers.push({ marker: m, row: row });
+      });
+      return markers.length;
+    }
+
+    function fit() {
+      var pts = markers.map(function (x) { return x.marker.getLatLng(); });
+      if (!pts.length) return;
+      if (pts.length === 1) { map.setView(pts[0], 15); return; }
+      map.fitBounds(global.L.latLngBounds(pts).pad(0.2));
+    }
+
+    setTimeout(function () { map.invalidateSize(); }, 200);
+
+    return {
+      map: map,
+      show: show,
+      fit: fit,
+      focus: function (id) {
+        var hit = markers.filter(function (x) { return x.row.id === id; })[0];
+        if (!hit) return;
+        map.setView(hit.marker.getLatLng(), 16);
+        hit.marker.openPopup();
+      },
+      invalidate: function () { map.invalidateSize(); }
+    };
+  }
+
   global.KisaMap = {
     createPicker: createPicker,
+    createDisplay: createDisplay,
     reverseGeocode: reverseGeocode,
     FALLBACK: FALLBACK
   };

@@ -325,6 +325,33 @@
     var commentNum = el('span', null, String(comments.length));
     commentBtn.appendChild(commentNum);
     actions.appendChild(commentBtn);
+
+    actions.appendChild(el('div', 'action-spacer'));
+
+    /* "I've taken them in". Open to any signed-in neighbour, because whoever
+       ends up housing the cat is often not whoever reported it. */
+    if (row.taken_in_by) {
+      actions.appendChild(el('span', 'taken-in-badge', 'Taken in'));
+    } else if (uid) {
+      var adopt = el('button', 'btn-adopt', "I've taken them in");
+      adopt.type = 'button';
+      adopt.addEventListener('click', function () {
+        var note = window.prompt(
+          'Let the community know this cat is safe with you.\n\n'
+          + 'Add a note (optional), for example "Taking them to the vet tomorrow".', '');
+        if (note === null) return;    /* cancelled */
+        adopt.disabled = true;
+        adopt.textContent = 'Saving...';
+        KisaStore.sightings.markTakenIn(row.id, note).then(function () {
+          adopt.replaceWith(el('span', 'taken-in-badge', 'Taken in'));
+        }).catch(function (err) {
+          adopt.disabled = false;
+          adopt.textContent = "I've taken them in";
+          window.alert(err.message || 'Could not save that.');
+        });
+      });
+      actions.appendChild(adopt);
+    }
     article.appendChild(actions);
 
     /* Comments */

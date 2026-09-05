@@ -445,3 +445,48 @@ img {
 @media (max-width: 900px) {
   .kisa-notif-panel { width: 280px; }
 }
+
+/* ---------------------------------------------------------------
+   12. Live map pins and popups
+   --------------------------------------------------------------- */
+.kisa-map-display { cursor: grab; }
+.kisa-map-display:active { cursor: grabbing; }
+
+/* Colour by condition. Static, nothing pulses. */
+.kisa-pin-sos .kisa-pin-dot        { background: #c0504a; }
+.kisa-pin-injured .kisa-pin-dot    { background: #d07a4a; }
+.kisa-pin-needs-care .kisa-pin-dot { background: #c79a3e; }
+.kisa-pin-healthy .kisa-pin-dot,
+.kisa-pin-safe .kisa-pin-dot       { background: var(--accent-2, #567C8D); }
+
+.kisa-popup { font-size: 13px; line-height: 1.5; }
+.kisa-popup-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  padding: 2px 8px; border-radius: 99px; margin-bottom: 6px;
+}
+.kisa-popup-badge.badge-sos        { background: rgba(192,80,74,0.16);  color: #b23b3b; }
+.kisa-popup-badge.badge-needs-care { background: rgba(199,154,62,0.18); color: #a97620; }
+.kisa-popup-badge.badge-safe       { background: rgba(86,124,141,0.18); color: #41697c; }
+.kisa-popup-where { font-weight: 700; color: #2F4156; margin-bottom: 4px; }
+.kisa-popup-note  { color: #46586b; margin-bottom: 5px; }
+.kisa-popup-meta,
+.kisa-popup-time  { font-size: 11px; color: #6b7c8c; }
+.kisa-popup-rescued {
+  margin-top: 6px; font-size: 11px; font-weight: 700; color: #3f8b66;
+}
+/* Leaflet popups paint on their own white card, so these keep their own
+   colours rather than inheriting the page theme. */
+.leaflet-popup-content { margin: 12px 14px; }
+
+/* Marks a cat as safely housed, in the community feed. */
+.taken-in-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 99px;
+  background: rgba(78, 158, 120, 0.16);
+  color: #3f8b66;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) { .taken-in-badge { color: #7fc7a2; } }

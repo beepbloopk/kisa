@@ -282,7 +282,7 @@
     .map-updated { font-size:12px; color:var(--text-3); font-weight:500; white-space:nowrap; }
 
     .map-stage-wrap { position:relative; }
-    .map-stage {
+    .map-stage { min-height: 420px;
       position:relative; width:100%;
       aspect-ratio: 16 / 11; min-height: 420px;
       background:#C8D9E6; overflow:hidden;
@@ -549,13 +549,16 @@
       .back-to-top { bottom: 24px; right: 24px; width: 44px; height: 44px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05b">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05b">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05c">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05c">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05b"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05b"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05b" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-05b" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-05c"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/kisa-map.js?v=2026-09-05c"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-05c"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05c" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-05c" defer></script>
 </head>
 <body>
 
@@ -840,21 +843,22 @@
      already reflected in this project's community feed.
   ══════════════════════════════════════ */
   (function () {
-    var REPORTS = [
-      { id:'r2', name:'Shadow',   status:'sos',         area:'North Avenue',               note:'Limping near the corner store, rescue team dispatched.',            minutesAgo:14,  top:46, left:22, initials:'SH', color:'#2F4156' },
-      { id:'r3', name:'Luna',     status:'needs-care',  area:'Elm Road Community Garden',  note:'Shy grey cat, may be pregnant, sheltering near the garden shed.',    minutesAgo:300, top:70, left:74, initials:'LU', color:'#3a6070' },
-      { id:'r4', name:'Whiskers', status:'needs-care',  area:'Riverside Park, East Gate',   note:'Thin and cautious, seen in the same spot for two days running.',    minutesAgo:210, top:80, left:38, initials:'WH', color:'#3a6070' },
-      { id:'r1', name:'Captain',  status:'safe',        area:'Maple St & 3rd Ave',         note:'Safely caught by the rescue team, now getting care for his paw.',   minutesAgo:480, top:30, left:64, initials:'CA', color:'#567C8D' },
-      { id:'r5', name:'Biscuit',  status:'safe',        area:'Old Market Quarter',         note:'Friendly ginger tom, a regular near the bakery entrance.',          minutesAgo:120, top:18, left:32, initials:'BI', color:'#567C8D' },
-      { id:'r6', name:'Mittens',  status:'safe',        area:'Market Street',              note:'Healthy and social, comes right up to people without hesitation.',  minutesAgo:120, top:54, left:48, initials:'MI', color:'#567C8D' },
-      { id:'r7', name:'Mochi',    status:'safe',        area:'Riverside Park, Fountain',   note:'Reunited with her microchip-registered owner, thanks to the community.', minutesAgo:1440, top:34, left:87, initials:'MO', color:'#567C8D' }
-    ];
+    /* Conditions in the database are healthy, needs-care, injured and sos.
+       The filter chips offer Safe, Needs Care and SOS, so injured folds in
+       with needs-care, and anything already taken in counts as safe. */
+    function statusOf(row) {
+      if (row.taken_in_by) return 'safe';
+      if (row.condition === 'sos') return 'sos';
+      if (row.condition === 'needs-care' || row.condition === 'injured') return 'needs-care';
+      return 'safe';
+    }
 
-    var STATUS_LABEL = { sos:'SOS', 'needs-care':'Needs Care', safe:'Safe' };
-    var STATUS_ORDER  = { sos:0, 'needs-care':1, safe:2 };
-    var STATUS_ICON   = { sos:'alert-triangle', 'needs-care':'thermometer', safe:'check-circle' };
+    var STATUS_LABEL = { sos: 'SOS', 'needs-care': 'Needs Care', safe: 'Safe' };
+    var STATUS_ORDER = { sos: 0, 'needs-care': 1, safe: 2 };
 
-    function timeAgoLabel(mins) {
+    function timeAgoLabel(iso) {
+      var mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+      if (mins < 1) return 'just now';
       if (mins < 60) return mins + ' min ago';
       var hrs = Math.round(mins / 60);
       if (hrs < 24) return hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
@@ -862,169 +866,139 @@
       return days + (days === 1 ? ' day ago' : ' days ago');
     }
 
-    var mapStage = document.getElementById('mapStage');
-    var reportsList = document.getElementById('reportsList');
-    var reportsEmpty = document.getElementById('reportsEmpty');
-    var reportsSummary = document.getElementById('reportsSummary');
+    var mapStage      = document.getElementById('mapStage');
+    var reportsList   = document.getElementById('reportsList');
+    var reportsEmpty  = document.getElementById('reportsEmpty');
+    var reportsSummary= document.getElementById('reportsSummary');
+    var mapUpdated    = document.getElementById('mapUpdated');
+    var filterChips   = document.getElementById('filterChips');
+    if (!mapStage) return;
 
-    /* Build a <i data-lucide="..."> element for a fixed, internally-defined icon name.
-       Never pass user-supplied strings here. Icon names always come from STATUS_ICON. */
-    function iconEl(name) {
-      var i = document.createElement('i');
-      i.setAttribute('data-lucide', name);
-      return i;
+    var rows = [];
+    var filter = 'all';
+    var display = null;
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
     }
 
-    /* SECURITY: report fields (name, area, note, initials) will come from
-       user-submitted sighting reports once Firebase is wired in (see TODOs).
-       Every one of those fields is untrusted input, so it is written with
-       textContent and DOM node creation below, never innerHTML, to rule out
-       stored XSS regardless of what a submitted report contains. */
+    /* Popup content. Everything here was typed by a member of the public, so
+       it is assembled from text nodes rather than an HTML string. */
+    function popupFor(row) {
+      var box = el('div', 'kisa-popup');
+      var status = statusOf(row);
+      box.appendChild(el('div', 'kisa-popup-badge badge-' + status, STATUS_LABEL[status]));
+      box.appendChild(el('div', 'kisa-popup-where', row.location_text || 'Location on map'));
+      if (row.description) box.appendChild(el('div', 'kisa-popup-note', row.description));
+      var bits = [];
+      if (row.coat_color) bits.push(row.coat_color);
+      if (row.age_group && row.age_group !== 'unknown') bits.push(row.age_group);
+      if (bits.length) box.appendChild(el('div', 'kisa-popup-meta', bits.join(' · ')));
+      box.appendChild(el('div', 'kisa-popup-time', timeAgoLabel(row.created_at)));
+      if (row.taken_in_by) {
+        box.appendChild(el('div', 'kisa-popup-rescued', 'Taken in by a neighbour'));
+      }
+      return box;
+    }
 
-    /* Render map pins */
-    REPORTS.forEach(function (r) {
-      var pin = document.createElement('div');
-      pin.className = 'map-pin status-' + r.status;
-      pin.style.top = r.top + '%';
-      pin.style.left = r.left + '%';
-      pin.dataset.id = r.id;
-      pin.dataset.status = r.status;
-      pin.setAttribute('role', 'button');
-      pin.setAttribute('tabindex', '0');
-      pin.setAttribute('aria-label', STATUS_LABEL[r.status] + ': ' + r.name + ', ' + r.area);
+    function visible() {
+      return rows.filter(function (r) { return filter === 'all' || statusOf(r) === filter; });
+    }
 
-      var marker = document.createElement('div');
-      marker.className = 'map-pin-marker';
-      marker.appendChild(iconEl(STATUS_ICON[r.status]));
-
-      var label = document.createElement('div');
-      label.className = 'map-pin-label';
-      label.textContent = STATUS_LABEL[r.status] + ': ' + r.name;
-
-      pin.appendChild(marker);
-      pin.appendChild(label);
-      mapStage.appendChild(pin);
-    });
-
-    /* Sort: SOS first, then Needs Care, then Safe. Most recent within each group. */
-    var sorted = REPORTS.slice().sort(function (a, b) {
-      if (STATUS_ORDER[a.status] !== STATUS_ORDER[b.status]) return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-      return a.minutesAgo - b.minutesAgo;
-    });
-
-    /* Render report cards */
-    sorted.forEach(function (r) {
-      var card = document.createElement('div');
-      card.className = 'report-card status-' + r.status;
-      card.dataset.id = r.id;
-      card.dataset.status = r.status;
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-
-      var avatar = document.createElement('div');
-      avatar.className = 'report-avatar';
-      avatar.style.background = /^#[0-9A-Fa-f]{3,8}$/.test(r.color) ? r.color : '#567C8D';
-      avatar.textContent = r.initials;
-
-      var body = document.createElement('div');
-      body.className = 'report-body';
-
-      var topRow = document.createElement('div');
-      topRow.className = 'report-top-row';
-      var nameSpan = document.createElement('span');
-      nameSpan.className = 'report-name';
-      nameSpan.textContent = r.name;
-      var badge = document.createElement('span');
-      badge.className = 'badge badge-' + r.status;
-      badge.textContent = STATUS_LABEL[r.status];
-      topRow.appendChild(nameSpan);
-      topRow.appendChild(badge);
-
-      var loc = document.createElement('div');
-      loc.className = 'report-loc';
-      loc.appendChild(iconEl('map-pin'));
-      var locSpan = document.createElement('span');
-      locSpan.textContent = r.area;
-      loc.appendChild(locSpan);
-
-      var note = document.createElement('p');
-      note.className = 'report-note';
-      note.textContent = r.note;
-
-      var time = document.createElement('div');
-      time.className = 'report-time';
-      time.appendChild(iconEl('clock'));
-      var timeSpan = document.createElement('span');
-      timeSpan.textContent = timeAgoLabel(r.minutesAgo);
-      time.appendChild(timeSpan);
-
-      body.appendChild(topRow);
-      body.appendChild(loc);
-      body.appendChild(note);
-      body.appendChild(time);
-      card.appendChild(avatar);
-      card.appendChild(body);
-      reportsList.appendChild(card);
-    });
-
-    if (window.lucide) lucide.createIcons();
-
-    /* Counts */
-    var counts = { all: REPORTS.length, sos:0, 'needs-care':0, safe:0 };
-    REPORTS.forEach(function (r) { counts[r.status]++; });
-    document.getElementById('count-all').textContent = counts.all;
-    document.getElementById('count-sos').textContent = counts.sos;
-    document.getElementById('count-needs-care').textContent = counts['needs-care'];
-    document.getElementById('count-safe').textContent = counts.safe;
-    reportsSummary.textContent = counts.all + ' active reports · ' + counts.sos + ' SOS';
-
-    /* Filtering */
-    var chips = document.querySelectorAll('.filter-chip');
-    var pins = document.querySelectorAll('.map-pin');
-    var cards = document.querySelectorAll('.report-card');
-
-    function applyFilter(filter) {
-      var visibleCount = 0;
-      pins.forEach(function (p) {
-        var match = filter === 'all' || p.dataset.status === filter;
-        p.classList.toggle('filtered-out', !match);
+    function renderCounts() {
+      var counts = { all: rows.length, sos: 0, 'needs-care': 0, safe: 0 };
+      rows.forEach(function (r) { counts[statusOf(r)]++; });
+      Object.keys(counts).forEach(function (k) {
+        var n = document.getElementById('count-' + k);
+        if (n) n.textContent = String(counts[k]);
       });
-      cards.forEach(function (c) {
-        var match = filter === 'all' || c.dataset.status === filter;
-        c.classList.toggle('filtered-out', !match);
-        if (match) visibleCount++;
-      });
-      reportsEmpty.classList.toggle('show', visibleCount === 0);
     }
 
-    chips.forEach(function (chip) {
-      chip.addEventListener('click', function () {
-        chips.forEach(function (c) { c.classList.remove('active'); });
-        chip.classList.add('active');
-        applyFilter(chip.dataset.filter);
+    function renderList() {
+      var shown = visible().slice().sort(function (a, b) {
+        var d = STATUS_ORDER[statusOf(a)] - STATUS_ORDER[statusOf(b)];
+        return d !== 0 ? d : new Date(b.created_at) - new Date(a.created_at);
       });
-    });
+      reportsList.innerHTML = '';
+      reportsEmpty.style.display = shown.length ? 'none' : 'block';
 
-    /* Cross-highlight: pin <-> card */
-    function clearActive() {
-      pins.forEach(function (p) { p.classList.remove('active'); });
-      cards.forEach(function (c) { c.classList.remove('active'); });
+      shown.forEach(function (row) {
+        var status = statusOf(row);
+        var card = el('button', 'report-card status-' + status);
+        card.type = 'button';
+        card.setAttribute('data-id', row.id);
+
+        var head = el('div', 'report-card-head');
+        head.appendChild(el('span', 'report-card-title', row.location_text || 'Sighting'));
+        head.appendChild(el('span', 'report-badge badge-' + status, STATUS_LABEL[status]));
+        card.appendChild(head);
+
+        if (row.description) card.appendChild(el('div', 'report-card-note', row.description));
+        card.appendChild(el('div', 'report-card-time', timeAgoLabel(row.created_at)));
+
+        card.addEventListener('click', function () {
+          if (display) display.focus(row.id);
+          mapStage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        reportsList.appendChild(card);
+      });
+
+      var n = shown.length;
+      reportsSummary.textContent = n === 0
+        ? 'No reports match this filter.'
+        : n + (n === 1 ? ' report' : ' reports')
+          + (filter === 'all' ? '' : ' marked ' + STATUS_LABEL[filter]);
     }
-    function highlight(id) {
-      clearActive();
-      var pin = mapStage.querySelector('.map-pin[data-id="' + id + '"]');
-      var card = reportsList.querySelector('.report-card[data-id="' + id + '"]');
-      if (pin) pin.classList.add('active');
-      if (card) { card.classList.add('active'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+
+    function draw() {
+      if (display) display.show(visible());
+      renderList();
     }
-    pins.forEach(function (p) {
-      p.addEventListener('click', function () { highlight(p.dataset.id); });
-      p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); highlight(p.dataset.id); } });
-    });
-    cards.forEach(function (c) {
-      c.addEventListener('click', function () { highlight(c.dataset.id); });
-      c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); highlight(c.dataset.id); } });
-    });
+
+    function load() {
+      if (!window.KisaStore || !window.KisaMap) return;
+      display = KisaMap.createDisplay(mapStage, { popup: popupFor });
+
+      KisaStore.sightings.listForMap(200).then(function (data) {
+        rows = data;
+        renderCounts();
+        draw();
+        if (display) display.fit();
+        if (mapUpdated) mapUpdated.textContent = 'Updated just now';
+
+        if (!rows.length) {
+          reportsSummary.textContent = 'No sightings reported yet.';
+          reportsEmpty.textContent =
+            'Nothing has been reported yet. Be the first to log a sighting.';
+          reportsEmpty.style.display = 'block';
+        }
+      }).catch(function (err) {
+        var msg = err && err.message ? err.message : 'Could not load the map.';
+        if (/sightings_map|schema cache|does not exist/i.test(msg)) {
+          msg = 'The map needs one more setup step: run backend/map_and_rescue.sql in Supabase.';
+        }
+        reportsSummary.textContent = msg;
+        reportsEmpty.textContent = msg;
+        reportsEmpty.style.display = 'block';
+      });
+    }
+
+    if (filterChips) {
+      filterChips.addEventListener('click', function (e) {
+        var chip = e.target.closest('.filter-chip');
+        if (!chip) return;
+        filter = chip.getAttribute('data-filter') || 'all';
+        [].forEach.call(filterChips.querySelectorAll('.filter-chip'), function (c) {
+          c.classList.toggle('active', c === chip);
+        });
+        draw();
+      });
+    }
+
+    load();
   })();
 
   /* ── Paw cursor trail (desktop only, matched to dashboard.html) ── */
@@ -1084,6 +1058,6 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05b" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-05c" defer></script>
 </body>
 </html>
