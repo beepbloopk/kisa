@@ -395,6 +395,43 @@
     }
   };
 
+  /* ── Notifications ────────────────────────────────────────────── */
+
+  var Notifications = {
+    /* Rows are created by database triggers, never by the client, so there
+       is no create() here on purpose. */
+    list: function (limit) {
+      return sb().from('notifications')
+        .select('id, type, read_at, created_at, sighting_id, comment_id, ' +
+                'actor:actor_id(display_name), ' +
+                'sightings:sighting_id(location_text, condition)')
+        .order('created_at', { ascending: false })
+        .limit(limit || 20)
+        .then(function (r) { if (r.error) throw fail(r.error); return r.data || []; });
+    },
+
+    unreadCount: function () {
+      return sb().from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .is('read_at', null)
+        .then(function (r) { return r.error ? 0 : (r.count || 0); });
+    },
+
+    markAllRead: function () {
+      return requireUserId().then(function (uid) {
+        return sb().from('notifications')
+          .update({ read_at: new Date().toISOString() })
+          .eq('user_id', uid).is('read_at', null);
+      }).then(function (r) { if (r.error) throw fail(r.error); });
+    },
+
+    markRead: function (id) {
+      return sb().from('notifications')
+        .update({ read_at: new Date().toISOString() }).eq('id', id)
+        .then(function (r) { if (r.error) throw fail(r.error); });
+    }
+  };
+
   /* ── Community feed (posts) ───────────────────────────────────── */
 
   var Feed = {
@@ -493,6 +530,7 @@
     auth: Auth,
     profiles: Profiles,
     sightings: Sightings,
+    notifications: Notifications,
     feed: Feed,
     sos: Sos,
     cats: Cats,
