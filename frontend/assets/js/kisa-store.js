@@ -195,23 +195,41 @@
   /* ── Profiles ─────────────────────────────────────────────────── */
 
   var Profiles = {
+    /* Your own profile, every column. Other people can only read a
+       profile's public columns (see backend/contact_avatar_settings.sql),
+       and a plain select cannot reach the private ones even for you, so
+       this goes through get_my_profile(). Until that function is installed
+       it falls back to a plain select of every column. */
     get: function (userId) {
-      return sb().from('profiles')
-        .select('id, display_name, avatar_url, phone, created_at')
-        .eq('id', userId).maybeSingle()
-        .then(function (r) { if (r.error) throw fail(r.error); return r.data; });
+      return sb().rpc('get_my_profile').then(function (r) {
+        if (!r.error) return r.data && r.data.id ? r.data : null;
+        if (!/could not find|does not exist|schema cache/i.test(r.error.message || '')) {
+          throw fail(r.error);
+        }
+        return sb().from('profiles').select('*').eq('id', userId).maybeSingle()
+          .then(function (x) { if (x.error) throw fail(x.error); return x.data; });
+      });
     },
 
-    /* Only display_name, avatar_url and phone exist on this table. The
-       profile form also collects a bio and location, which have nowhere to
-       go yet, see updateExtras below. */
+    /* Only columns listed here are sent. This list used to stop at
+       display_name, avatar_url and phone, so bio and location were dropped
+       on the way out even once their columns existed, while Save still
+       reported success. Keep it in step with the profiles table. */
     update: function (userId, fields) {
       var allowed = {};
-      ['display_name', 'avatar_url', 'phone'].forEach(function (k) {
+      ['display_name', 'avatar_url', 'phone', 'bio', 'location',
+       'notif_nearby', 'notif_replies', 'notif_rescue', 'notif_news',
+       'show_location', 'visibility'].forEach(function (k) {
         if (fields[k] !== undefined) allowed[k] = fields[k];
       });
-      return sb().from('profiles').update(allowed).eq('id', userId).select().single()
-        .then(function (r) { if (r.error) throw fail(r.error); return r.data; });
+      /* No .select() on the update. Once private columns are locked down
+         they cannot be read back through a plain select, even by their
+         owner, so fetch the fresh row through get() instead. */
+      return sb().from('profiles').update(allowed).eq('id', userId)
+        .then(function (r) {
+          if (r.error) throw fail(r.error);
+          return Profiles.get(userId);
+        });
     },
 
     /* avatars is a PRIVATE bucket, so the stored path has to be exchanged
@@ -230,6 +248,12 @@
       if (/^https?:/.test(path)) return Promise.resolve(path);
       return sb().storage.from('avatars').createSignedUrl(path, seconds || 3600)
         .then(function (r) { return r.error ? null : r.data.signedUrl; });
+    },
+
+    removeAvatar: function (path) {
+      if (!path || /^https?:/.test(path)) return Promise.resolve();
+      return sb().storage.from('avatars').remove([path])
+        .then(function (r) { if (r.error) throw fail(r.error); });
     }
   };
 
@@ -498,6 +522,37 @@
     }
   };
 
+  /* ── Contact form ── */
+
+  var Contact = {
+    /* No .select() after the insert. contact_messages deliberately has no
+       select policy, so asking for the row back would be refused and turn a
+       successful send into an error. */
+    send: function (msg) {
+      return sb().auth.getUser()
+        .then(function (r) { return r && r.data && r.data.user ? r.data.user.id : null; },
+              function () { return null; })
+        .then(function (uid) {
+          return sb().from('contact_messages').insert({
+            user_id: uid,
+            name: msg.name,
+            email: msg.email,
+            msg_type: msg.type,
+            subject: msg.subject || null,
+            message: msg.message
+          });
+        })
+        .then(function (r) {
+          if (!r.error) return;
+          if (/contact_messages|schema cache|does not exist/i.test(r.error.message || '')) {
+            throw new Error('Messages cannot be sent from this form yet. ' +
+                            'Please email hello@kisa.app instead.');
+          }
+          throw fail(r.error);
+        });
+    }
+  };
+
   /* ── Community feed (posts) ───────────────────────────────────── */
 
   var Feed = {
@@ -597,6 +652,7 @@
     profiles: Profiles,
     sightings: Sightings,
     notifications: Notifications,
+    contact: Contact,
     stats: Stats,
     feed: Feed,
     sos: Sos,

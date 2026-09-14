@@ -668,14 +668,14 @@
       .back-to-top { bottom: 20px; right: 16px; width: 42px; height: 42px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05f">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05f">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14a">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14a">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05f"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05f"></script>
-  <script src="assets/js/kisa-feed.js?v=2026-09-05f"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05f" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-05f" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-feed.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14a" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14a" defer></script>
 </head>
 <body>
 
@@ -758,9 +758,10 @@
           <h1 class="page-title">Our Community</h1>
           <p class="page-sub">Cats spotted nearby by your neighbours. Like, comment, and help out.</p>
         </div>
-        <div class="live-badge">
+        <!-- Hidden until the real count arrives, so no invented number ever shows. -->
+        <div class="live-badge" id="weeklyBadge" hidden>
           <span class="live-dot"></span>
-          24 cats spotted this week
+          <span id="weeklyCount"></span>
         </div>
       </div>
     </div>
@@ -1083,13 +1084,31 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05f" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-14a" defer></script>
 
 <script>
 /* The feed is rendered from the database. kisa-feed.js owns the markup and
    its own event handlers, so nothing here uses inline onclick. */
 document.addEventListener('DOMContentLoaded', function () {
   if (window.KisaFeed) KisaFeed.render(document.getElementById('feed'));
+
+  /* The header used to say "24 cats spotted this week" for everyone, forever.
+     Count real sightings from the last seven days instead. If the count
+     cannot be fetched the badge stays hidden rather than showing a guess. */
+  var badge = document.getElementById('weeklyBadge');
+  var label = document.getElementById('weeklyCount');
+  if (!badge || !label || !window.KisaStore) return;
+  var since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  KisaStore.client().from('sightings')
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', since)
+    .then(function (r) {
+      if (r.error || typeof r.count !== 'number') return;
+      label.textContent = r.count === 0
+        ? 'No cats spotted this week yet'
+        : r.count + (r.count === 1 ? ' cat spotted this week' : ' cats spotted this week');
+      badge.hidden = false;
+    }, function () { /* offline or unreachable: keep it hidden */ });
 });
 </script>
 </body>

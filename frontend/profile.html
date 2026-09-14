@@ -952,13 +952,13 @@
       .kisa-modal { align-items: flex-end; padding: 0; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-05f">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-05f">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14a">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14a">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-05f"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-05f"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-05f" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-05f" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14a" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14a" defer></script>
 </head>
 <body>
 
@@ -1433,6 +1433,16 @@
     return typeof v === 'string' && /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
   }
 
+  /* Avatars now come back from Supabase storage as signed https URLs.
+     Accept those, and only from our own project, alongside data URLs. */
+  function isSafeImageSrc(v) {
+    if (isImageDataUrl(v)) return true;
+    var base = window.KISA_CONFIG && KISA_CONFIG.supabaseUrl;
+    return typeof v === 'string' && !!base && v.indexOf(base + '/storage/') === 0;
+  }
+
+  /* Photos set before avatars moved to Supabase were kept only in this
+     browser under this key. Read once, uploaded, then cleared. */
   var AVATAR_KEY = 'kisa_avatar';
 
   function loadStoredAvatar() {
@@ -1445,7 +1455,7 @@
     var navPfp = document.getElementById('navPfp');
     var navFallback = document.getElementById('navIconFallback');
     if (navPfp && navFallback) {
-      if (isImageDataUrl(dataUrl)) {
+      if (isSafeImageSrc(dataUrl)) {
         navPfp.src = dataUrl;
         navPfp.classList.add('loaded');
         navFallback.classList.add('hidden');
@@ -1459,7 +1469,7 @@
     var sbImg = document.getElementById('sidebarAvatarImg');
     var sbInitial = document.getElementById('sidebarInitial');
     if (sbImg && sbInitial) {
-      if (isImageDataUrl(dataUrl)) {
+      if (isSafeImageSrc(dataUrl)) {
         sbImg.src = dataUrl;
         sbImg.classList.add('loaded');
         sbInitial.classList.add('hidden');
@@ -1473,7 +1483,7 @@
     var avatarImg = document.getElementById('avatarImg');
     var avatarFallback = document.getElementById('avatarFallback');
     if (avatarImg && avatarFallback) {
-      if (isImageDataUrl(dataUrl)) {
+      if (isSafeImageSrc(dataUrl)) {
         avatarImg.src = dataUrl;
         avatarImg.style.display = 'block';
         avatarFallback.style.display = 'none';
@@ -1485,7 +1495,7 @@
     }
   }
 
-  applyAvatarEverywhere(loadStoredAvatar());
+  applyAvatarEverywhere(null);
 
   /* Avatar upload pickers */
   var avatarInput = document.getElementById('avatarInput');
@@ -1506,14 +1516,41 @@
         avatarInput.value = '';
         return;
       }
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var dataUrl = e.target.result;
-        try { localStorage.setItem(AVATAR_KEY, dataUrl); } catch (err) {}
-        applyAvatarEverywhere(dataUrl);
-        showToast('Profile photo updated');
-      };
-      reader.readAsDataURL(file);
+      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+        showToast('Please choose a PNG, JPG or WEBP image.');
+        avatarInput.value = '';
+        return;
+      }
+      if (!kisaUser) {
+        showToast('Please wait a moment and try again');
+        avatarInput.value = '';
+        return;
+      }
+      /* This used to write the image into localStorage and nowhere else, so
+         the photo existed only in this one browser. It goes to the avatars
+         bucket now, and the path is saved on the profile. */
+      var previous = kisaAvatarPath;
+      showToast('Uploading photo...');
+      KisaStore.profiles.uploadAvatar(kisaUser.id, file)
+        .then(function (path) {
+          return KisaStore.profiles.update(kisaUser.id, { avatar_url: path })
+            .then(function () { return path; });
+        })
+        .then(function (path) {
+          kisaAvatarPath = path;
+          /* A different file extension means a different file. Tidy the old one. */
+          if (previous && previous !== path) {
+            KisaStore.profiles.removeAvatar(previous).catch(function () {});
+          }
+          return KisaStore.profiles.avatarUrl(path);
+        })
+        .then(function (url) {
+          applyAvatarEverywhere(url);
+          try { localStorage.removeItem(AVATAR_KEY); } catch (err) {}
+          showToast('Profile photo updated');
+        })
+        .catch(function (err) { showToast(err.message || 'Could not upload that photo'); })
+        .then(function () { avatarInput.value = ''; });
     });
   }
 
@@ -1521,8 +1558,20 @@
     avatarRemoveBtn.addEventListener('click', function () {
       try { localStorage.removeItem(AVATAR_KEY); } catch (err) {}
       if (avatarInput) avatarInput.value = '';
-      applyAvatarEverywhere(null);
-      showToast('Profile photo removed');
+      if (!kisaUser || !kisaAvatarPath) {
+        applyAvatarEverywhere(null);
+        showToast('Profile photo removed');
+        return;
+      }
+      var old = kisaAvatarPath;
+      KisaStore.profiles.update(kisaUser.id, { avatar_url: null })
+        .then(function () {
+          kisaAvatarPath = null;
+          applyAvatarEverywhere(null);
+          showToast('Profile photo removed');
+          return KisaStore.profiles.removeAvatar(old);
+        })
+        .catch(function (err) { showToast(err.message || 'Could not remove your photo'); });
     });
   }
 
@@ -1734,6 +1783,69 @@
     });
   }
 
+  /* ---- Settings ---- */
+  var VISIBILITY = ['public', 'community', 'private'];
+
+  function fillSettings(profile) {
+    if (!profile) return;
+    function setBox(id, value) {
+      var el = document.getElementById(id);
+      if (el && typeof value === 'boolean') el.checked = value;
+    }
+    setBox('notifNearby',  profile.notif_nearby);
+    setBox('notifReplies', profile.notif_replies);
+    setBox('notifRescue',  profile.notif_rescue);
+    setBox('notifNews',    profile.notif_news);
+    setBox('showLocation', profile.show_location);
+    /* Checked against the known list before it goes near a selector. */
+    if (VISIBILITY.indexOf(profile.visibility) !== -1) {
+      var radio = document.querySelector('input[name="visibility"][value="' + profile.visibility + '"]');
+      if (radio) radio.checked = true;
+    }
+  }
+
+  /* ---- Profile photo ---- */
+  var kisaAvatarPath = null;
+
+  function dataUrlToFile(dataUrl) {
+    /* Built by hand rather than fetch(dataUrl): connect-src does not allow
+       data: URLs, so fetch would be blocked by the page's own policy. */
+    var m = /^data:(image\/(png|jpeg|gif|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
+    if (!m) return null;
+    var bin = atob(m[3]);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var ext = m[2] === 'jpeg' ? 'jpg' : m[2];
+    return new File([bytes], 'avatar.' + ext, { type: m[1] });
+  }
+
+  function loadAvatar(profile) {
+    var path = profile && profile.avatar_url;
+    if (path) {
+      kisaAvatarPath = path;
+      KisaStore.profiles.avatarUrl(path).then(function (url) {
+        if (url) applyAvatarEverywhere(url);
+      });
+      try { localStorage.removeItem(AVATAR_KEY); } catch (e) {}
+      return;
+    }
+    /* One-time move for photos set before this change, which lived only in
+       this browser. Upload it so it follows the account from now on. */
+    var legacy = loadStoredAvatar();
+    var file = isImageDataUrl(legacy) ? dataUrlToFile(legacy) : null;
+    if (!file || !kisaUser) return;
+    applyAvatarEverywhere(legacy);
+    KisaStore.profiles.uploadAvatar(kisaUser.id, file)
+      .then(function (p) {
+        kisaAvatarPath = p;
+        return KisaStore.profiles.update(kisaUser.id, { avatar_url: p });
+      })
+      .then(function () {
+        try { localStorage.removeItem(AVATAR_KEY); } catch (e) {}
+      })
+      .catch(function () { /* keep the local copy; they can upload again */ });
+  }
+
   /* ---- Load the signed-in account ----
      Everything above was written against placeholder markup. These fill it
      from the real user and their profiles row. */
@@ -1785,6 +1897,8 @@
           if (locEl && profile.location) locEl.value = profile.location;
         }
         syncNameDisplay();
+        loadAvatar(profile);
+        fillSettings(profile);
         loadMyReports(user.id);
       });
     }).catch(function () { /* signed out: the auth guard takes over */ });
@@ -1845,7 +1959,7 @@
     });
   });
 
-  /* Stubs events controls */
+  /* Settings controls */
   var saveSecurityBtn = document.getElementById('saveSecurityBtn');
   var saveNotifBtn = document.getElementById('saveNotifBtn');
   var savePrivacyBtn = document.getElementById('savePrivacyBtn');
@@ -1884,16 +1998,57 @@
       .catch(function (err) { restore(); showToast(err.message || 'Could not update password'); });
   });
 
-  /* These have nowhere to go: profiles has no notification or visibility
-     columns. Say so rather than showing a false "saved". */
-  function notStoredYet(btn, what) {
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      showToast(what + ' are not saved yet, this is coming soon');
-    });
+  /* Notification and privacy settings, stored on the profile. The privacy
+     choices are enforced by the database itself, through the policies in
+     backend/contact_avatar_settings.sql, not just remembered here. */
+  function checkedById(id) {
+    var el = document.getElementById(id);
+    return !!(el && el.checked);
   }
-  notStoredYet(saveNotifBtn, 'Notification preferences');
-  notStoredYet(savePrivacyBtn, 'Privacy settings');
+
+  function saveSettings(btn, fields, doneMsg) {
+    if (!btn) return;
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    KisaStore.profiles.update(kisaUser.id, fields)
+      .then(function (row) {
+        /* If the columns do not exist yet, the row comes back without them. */
+        var missing = Object.keys(fields).some(function (k) {
+          return !row || !Object.prototype.hasOwnProperty.call(row, k);
+        });
+        if (missing) throw new Error('setup');
+        showToast(doneMsg);
+      })
+      .catch(function (err) {
+        var msg = (err && err.message) || '';
+        showToast(/setup|column|schema cache/i.test(msg)
+          ? 'Settings need one more setup step: run backend/contact_avatar_settings.sql in Supabase.'
+          : (msg || 'Could not save your settings'));
+      })
+      .then(function () {
+        btn.disabled = false;
+        btn.textContent = label;
+      });
+  }
+
+  if (saveNotifBtn) saveNotifBtn.addEventListener('click', function () {
+    saveSettings(saveNotifBtn, {
+      notif_nearby:  checkedById('notifNearby'),
+      notif_replies: checkedById('notifReplies'),
+      notif_rescue:  checkedById('notifRescue'),
+      notif_news:    checkedById('notifNews')
+    }, 'Notification preferences saved');
+  });
+
+  if (savePrivacyBtn) savePrivacyBtn.addEventListener('click', function () {
+    var vis = document.querySelector('input[name="visibility"]:checked');
+    saveSettings(savePrivacyBtn, {
+      visibility: vis ? vis.value : 'public',
+      show_location: checkedById('showLocation')
+    }, 'Privacy settings saved');
+  });
 
   /* Export what we actually hold, straight from the browser. */
   if (exportDataBtn) exportDataBtn.addEventListener('click', function () {
@@ -2053,6 +2208,6 @@
 
 <!-- ══ COOKIES/LEGAL POPUP INTERACTIVE HANDLERS MODAL MODULE ENGINE ══ -->
 
-<script src="assets/js/kisa-modal.js?v=2026-09-05f" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-14a" defer></script>
 </body>
 </html>
