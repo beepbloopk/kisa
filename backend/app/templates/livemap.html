@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com; connect-src 'self' https://*.tile.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Kisa - Live Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/lucide@1.23.0/dist/umd/lucide.js" integrity="sha384-+Wa97DHpWU8c+hegs3RdnMeiaEIS6PXASszOAv8jXPHZhM2Sfqxb1dEpp7SGC7UG" crossorigin="anonymous" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── DESIGN TOKENS (identical across Kisa pages) ── */
+    :root {
+      color-scheme: light dark;
+
+      --bg:        #F5EFEB;
+      --surface:   #FFFFFF;
+      --nav-bg:    rgba(245,239,235,0.92);
+
+      --accent:    #2F4156;
+      --accent-2:  #567C8D;
+      --accent-sky:#C8D9E6;
+      --accent-10: rgba(47,65,86,0.07);
+      --accent-20: rgba(47,65,86,0.14);
+
+      --text:      #2F4156;
+      --text-body: rgba(47,65,86,0.80);
+      --text-2:    rgba(47,65,86,0.60);
+      --text-3:    rgba(47,65,86,0.38);
+
+      --border:    rgba(47,65,86,0.11);
+      --shadow-sm: 0 4px 24px rgba(47,65,86,0.07);
+      --shadow-md: 0 10px 40px rgba(47,65,86,0.11);
+
+      --r-sm: 12px;
+      --r:    16px;
+      --r-lg: 20px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #182433;
+        --surface:   #1F3145;
+        --nav-bg:    rgba(24,36,51,0.94);
+
+        --accent:    #C8D9E6;
+        --accent-2:  #7BAABB;
+        --accent-sky:rgba(200,217,230,0.14);
+        --accent-10: rgba(200,217,230,0.09);
+        --accent-20: rgba(200,217,230,0.20);
+
+        --text:      #C8D9E6;
+        --text-body: rgba(240,235,230,0.88);
+        --text-2:    rgba(240,235,230,0.64);
+        --text-3:    rgba(240,235,230,0.40);
+
+        --border:    rgba(200,217,230,0.15);
+        --shadow-sm: 0 4px 24px rgba(0,0,0,0.32);
+        --shadow-md: 0 10px 40px rgba(0,0,0,0.50);
+      }
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    @keyframes fadeInUp   { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes slideInLeft{ from{opacity:0;transform:translateX(-40px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes slideInRight{from{opacity:0;transform:translateX(40px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes scaleIn    { from{opacity:0;transform:scale(0.95);} to{opacity:1;transform:scale(1);} }
+    .animate-fade-in-up    { animation: fadeInUp    0.6s ease-out forwards; opacity: 0; }
+    .animate-fade-in-down  { animation: fadeInDown  0.6s ease-out forwards; opacity: 0; }
+    .animate-slide-in-left { animation: slideInLeft 0.6s ease-out forwards; opacity: 0; }
+    .animate-slide-in-right{ animation: slideInRight 0.6s ease-out forwards; opacity: 0; }
+    .animate-scale-in      { animation: scaleIn     0.6s ease-out forwards; opacity: 0; }
+    .stagger-1{animation-delay:.1s;} .stagger-2{animation-delay:.2s;} .stagger-3{animation-delay:.3s;}
+    .stagger-4{animation-delay:.4s;} .stagger-5{animation-delay:.5s;}
+
+    /* ── BASE ── */
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-body);
+      font-size: 17px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    /* ── LAYOUT ── */
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+
+    /* ── NAV (identical to profile.html / dashboard.html) ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .paw-progress {
+      position: absolute; bottom: 0; left: 0;
+      width: 100%; height: 2px;
+      background: var(--border); overflow: visible;
+    }
+    .paw-progress-fill {
+      height: 100%; width: 0%;
+      background: var(--accent-2);
+      border-radius: 0 2px 2px 0;
+      transition: width 0.08s linear;
+      position: relative;
+    }
+    .nav-inner { display:flex; align-items:center; justify-content:space-between; height:64px; }
+    .nav-logo {
+      display:flex; align-items:center; gap:8px;
+      font-weight:800; font-size:20px; color:var(--text); letter-spacing:-0.025em;
+    }
+    .nav-logo svg { color: var(--accent-2); }
+    .nav-links { display:flex; align-items:center; gap:30px; list-style:none; }
+    .nav-links a { font-size:14px; font-weight:500; color:var(--text-2); transition:color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--text); font-weight:600; }
+    .nav-right { display:flex; align-items:center; gap:6px; }
+    .nav-divider { width:1px; height:18px; background:var(--border); margin:0 6px; }
+
+    /* Account button — icon OR dynamic profile picture */
+    .account-wrap { position: relative; }
+    .account-btn {
+      width:36px; height:36px; border-radius:50%;
+      background: var(--accent-10); border:none;
+      display:flex; align-items:center; justify-content:center;
+      color: var(--accent-2); cursor:pointer; transition: all .18s;
+      overflow:hidden; padding:0; position:relative;
+    }
+    .account-btn:hover, .account-btn.open { background: var(--accent-20); color: var(--text); }
+    .account-btn .nav-pfp {
+      width:36px; height:36px; object-fit:cover; border-radius:50%;
+      display:none; position:absolute; inset:0;
+    }
+    .account-btn .nav-pfp.loaded { display:block; }
+    .account-btn i[data-lucide].hidden { display:none; }
+
+    .account-menu {
+      position:absolute; top:calc(100% + 10px); right:0;
+      min-width:210px; background:var(--surface);
+      border:1px solid var(--border); border-radius:var(--r-sm);
+      box-shadow:var(--shadow-md); padding:8px;
+      display:flex; flex-direction:column; gap:2px;
+      opacity:0; visibility:hidden; transform:translateY(-6px);
+      transition: opacity .18s, transform .18s, visibility .18s;
+      z-index:110;
+    }
+    .account-menu.open { opacity:1; visibility:visible; transform:translateY(0); }
+    .account-menu a {
+      display:flex; align-items:center; gap:10px;
+      font-size:14px; font-weight:500; color:var(--text-body);
+      padding:9px 10px; border-radius:8px; transition: background .15s, color .15s;
+    }
+    .account-menu a svg { width:16px; height:16px; color:var(--accent-2); flex-shrink:0; }
+    .account-menu a:hover { background: var(--accent-10); color: var(--text); }
+    .account-menu-divider { height:1px; background:var(--border); margin:6px 4px; }
+
+    /* HAMBURGER */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center; align-items:center;
+      gap:5px; width:40px; height:40px; border:none; background:none;
+      cursor:pointer; padding:8px; border-radius:var(--r-sm);
+    }
+    .hamburger span { display:block; width:22px; height:2px; background:var(--text); border-radius:2px; transition:all .25s; }
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger.open span:nth-child(2){opacity:0;}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+    /* MOBILE MENU */
+    .mobile-menu {
+      position:fixed; inset:64px 0 0 0; background:var(--bg);
+      padding:24px 20px; transform:translateX(100%);
+      transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+      z-index:99; display:flex; flex-direction:column; gap:4px; overflow-y:auto;
+    }
+    .mobile-menu.open { transform:translateX(0); }
+    .mobile-menu a {
+      display:flex; align-items:center; gap:10px;
+      padding:13px 16px; font-size:16px; font-weight:500;
+      color:var(--text-body); border-radius:var(--r-sm); transition:all .15s;
+    }
+    .mobile-menu a:hover, .mobile-menu a.active { background:var(--accent-10); color:var(--text); }
+    .mob-divider { height:1px; background:var(--border); margin:8px 0; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:'Inter', sans-serif; font-weight:600; font-size:15px;
+      padding:11px 20px; border-radius:var(--r-sm); border:none;
+      cursor:pointer; text-decoration:none; transition:all .2s;
+      white-space:nowrap; line-height:1;
+    }
+    .btn svg { width:15px; height:15px; flex-shrink:0; }
+    .btn-primary { background:#2F4156; color:#FFFFFF; }
+    .btn-primary:hover { background:#3a5170; transform:translateY(-1px); box-shadow:var(--shadow-md); }
+    .btn-outline { background:transparent; color:var(--text); border:1.5px solid var(--border); }
+    .btn-outline:hover { border-color:var(--accent-2); background:var(--accent-10); transform:translateY(-1px); }
+    .btn-sm { font-size:13px; padding:8px 14px; }
+
+    /* ── EYEBROW / HEADINGS ── */
+    .eyebrow {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; font-weight:700; letter-spacing:0.09em;
+      text-transform:uppercase; color:var(--accent-2); margin-bottom:14px;
+    }
+    .eyebrow svg { width:13px; height:13px; display:none; }
+    .heading { font-weight:800; color:var(--text); letter-spacing:-0.032em; line-height:1.1; }
+    .heading-lg { font-size: clamp(26px, 3.5vw, 38px); }
+
+    /* ── PAGE HERO ── */
+    .page-hero { padding: 52px 0 32px; }
+    .page-hero-row {
+      display:flex; align-items:flex-end; justify-content:space-between;
+      gap:20px; flex-wrap:wrap;
+    }
+    .hero-sub { color:var(--text-2); font-size:15px; margin-top:8px; max-width:480px; }
+
+    /* ── BADGES (identical to dashboard.html / index.html) ── */
+    .badge {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;
+      letter-spacing:0.01em; white-space:nowrap;
+    }
+    .badge-safe       { background: rgba(86,124,141,0.13); color:#567C8D; }
+    .badge-needs-care { background: rgba(200,217,230,0.45); color:#3a6070; }
+    .badge-sos        { background: rgba(47,65,86,0.10);   color:#2F4156; }
+    @media (prefers-color-scheme: dark) {
+      .badge-safe       { background: rgba(86,124,141,0.22); color:#a8d4e0; }
+      .badge-needs-care { background: rgba(86,124,141,0.18); color:#8fbbc9; }
+      .badge-sos        { background: rgba(200,217,230,0.14); color:var(--accent); }
+    }
+
+    /* ══════════════════════════════════════
+       MAP SECTION
+    ══════════════════════════════════════ */
+    .map-section { padding: 8px 0 84px; }
+    .map-layout {
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    /* ── Map panel ── */
+    .map-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .map-panel:hover { box-shadow: var(--shadow-sm); }
+
+    .map-toolbar {
+      display:flex; align-items:center; justify-content:space-between;
+      gap:14px; padding:16px 20px; border-bottom:1px solid var(--border);
+      flex-wrap:wrap;
+    }
+    .filter-chips { display:flex; gap:8px; flex-wrap:wrap; }
+    .filter-chip {
+      display:flex; align-items:center; gap:7px;
+      font-family:'Inter', sans-serif; font-size:13px; font-weight:600;
+      padding:7px 13px; border-radius:20px;
+      border:1.5px solid var(--border); background:var(--bg);
+      color:var(--text-2); cursor:pointer; transition: all .18s;
+    }
+    .filter-chip:hover { border-color:var(--accent-2); background:var(--accent-10); color:var(--text); }
+    .filter-chip.active { background:#2F4156; border-color:#2F4156; color:#fff; }
+    .filter-chip .chip-count {
+      font-size:11px; font-weight:700; padding:1px 7px; border-radius:10px;
+      background:var(--accent-10); color:var(--text-2);
+    }
+    .filter-chip.active .chip-count { background:rgba(255,255,255,0.22); color:#fff; }
+    .map-updated { font-size:12px; color:var(--text-3); font-weight:500; white-space:nowrap; }
+
+    .map-stage-wrap { position:relative; }
+    .map-stage {
+      position:relative; width:100%;
+      aspect-ratio: 16 / 11; min-height: 420px;
+      background:#C8D9E6; overflow:hidden;
+    }
+    @media (prefers-color-scheme: dark) { .map-stage { background: rgba(200,217,230,0.10); } }
+    .map-grid-bg {
+      position:absolute; inset:0;
+      background-image:
+        repeating-linear-gradient(rgba(47,65,86,0.06) 0 1px, transparent 1px 56px),
+        repeating-linear-gradient(90deg, rgba(47,65,86,0.06) 0 1px, transparent 1px 56px);
+    }
+    .map-roads-bg {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.32) 0 0),
+        repeating-linear-gradient(0deg, transparent 0 72px, rgba(255,255,255,0.20) 72px 76px),
+        repeating-linear-gradient(90deg, transparent 0 112px, rgba(255,255,255,0.20) 112px 116px);
+    }
+    .map-caption {
+      position:absolute; left:16px; bottom:14px;
+      font-size:11px; font-weight:600; color: rgba(47,65,86,0.55);
+      letter-spacing:0.03em; text-transform:uppercase;
+      background: rgba(255,255,255,0.55); padding:4px 9px; border-radius:8px;
+      pointer-events:none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .map-caption { background: rgba(24,36,51,0.5); color: rgba(240,235,230,0.5); }
+    }
+
+    /* Pins */
+    .map-pin {
+      position:absolute; transform: translate(-50%, -100%);
+      display:flex; flex-direction:column; align-items:center; gap:5px;
+      cursor:pointer; z-index:2; transition: transform .18s, z-index 0s;
+    }
+    .map-pin:hover, .map-pin.active { transform: translate(-50%, -100%) scale(1.06); z-index: 5; }
+    .map-pin-marker {
+      position: relative;
+      width:28px; height:28px; border-radius: 50% 50% 50% 3px;
+      transform: rotate(-45deg);
+      display:flex; align-items:center; justify-content:center;
+      border: 2px solid #fff; box-shadow: 0 2px 6px rgba(47,65,86,0.28);
+      flex-shrink:0;
+    }
+    .map-pin-marker svg { transform: rotate(45deg); width:14px; height:14px; color:#fff; stroke-width:2.4; }
+    .map-pin.status-safe       .map-pin-marker { background:#567C8D; }
+    .map-pin.status-needs-care .map-pin-marker { background:#3a6070; }
+    .map-pin.status-sos        .map-pin-marker {
+      background:#2F4156;
+      box-shadow: 0 0 0 3px rgba(47,65,86,0.16), 0 2px 6px rgba(47,65,86,0.32);
+    }
+    .map-pin.status-sos { z-index: 3; }
+    .map-pin.status-sos .map-pin-marker::before {
+      content:''; position:absolute; inset:-6px; border-radius:50% 50% 50% 3px;
+      border:2px solid rgba(47,65,86,0.35); animation: sosPulse 1.8s ease-out infinite;
+    }
+    @keyframes sosPulse {
+      0%   { transform: scale(0.85); opacity: 0.9; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .map-pin-label {
+      background: var(--surface); border:1.5px solid var(--border);
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight:700; letter-spacing:-0.005em; color: var(--text);
+      white-space: nowrap; box-shadow: var(--shadow-sm);
+      max-width: 160px; overflow:hidden; text-overflow: ellipsis;
+    }
+    .map-pin.status-sos .map-pin-label {
+      color:#fff; background:#2F4156; border-color:#2F4156;
+    }
+    @media (prefers-color-scheme: dark) {
+      .map-pin.status-sos .map-pin-label { color: #182433; background: var(--accent); border-color: var(--accent); }
+    }
+    .map-pin.filtered-out { display:none; }
+
+    /* Legend */
+    .map-legend {
+      display:flex; gap:18px; flex-wrap:wrap;
+      padding:12px 20px; border-top:1px solid var(--border);
+    }
+    .legend-item { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-2); font-weight:500; }
+    .legend-swatch { width:11px; height:11px; border-radius:3px; flex-shrink:0; }
+    .legend-swatch.safe { background:#567C8D; }
+    .legend-swatch.needs-care { background:#3a6070; }
+    .legend-swatch.sos { background:#2F4156; }
+
+    /* ── Reports panel ── */
+    .reports-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow:hidden;
+      position: sticky; top: 84px;
+      transition: box-shadow .2s;
+    }
+    .reports-panel:hover { box-shadow: var(--shadow-sm); }
+    .reports-panel-header { padding: 18px 20px 14px; border-bottom:1px solid var(--border); }
+    .reports-panel-title { font-size:15px; font-weight:700; color:var(--text); }
+    .reports-panel-sub { font-size:12px; color:var(--text-3); margin-top:3px; }
+
+    .reports-list { display:flex; flex-direction:column; max-height: 620px; overflow-y:auto; }
+    .report-card {
+      display:flex; gap:12px; padding:14px 20px;
+      border-bottom:1px solid var(--border); border-left:3px solid transparent;
+      cursor:pointer; transition: background .15s, border-color .15s;
+    }
+    .report-card:last-child { border-bottom:none; }
+    .report-card:hover, .report-card.active { background: var(--accent-10); }
+    .report-card.status-sos { border-left-color:#2F4156; }
+    @media (prefers-color-scheme: dark) { .report-card.status-sos { border-left-color: var(--accent); } }
+
+    .report-avatar {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:700; color:#fff;
+    }
+    .report-body { flex:1; min-width:0; }
+    .report-top-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+    .report-name { font-size:14px; font-weight:700; color:var(--text); }
+    .report-loc { display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-3); margin-bottom:5px; }
+    .report-loc svg { width:11px; height:11px; color:var(--accent-2); flex-shrink:0; }
+    .report-note { font-size:12.5px; color:var(--text-2); line-height:1.55; }
+    .report-time { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-3); margin-top:6px; }
+    .report-time svg { width:10px; height:10px; }
+    .report-card.filtered-out { display:none; }
+
+    .reports-empty {
+      padding: 40px 24px; text-align:center; color:var(--text-3); font-size:13px; display:none;
+    }
+    .reports-empty.show { display:block; }
+
+    /* ── FOOTER (identical to all pages) ── */
+    .footer { padding: 72px 0 44px; border-top: 1px solid var(--border); }
+    .footer-inner {
+      display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap:48px; padding-bottom:48px; border-bottom:1px solid var(--border); margin-bottom:32px;
+    }
+    .footer-logo {
+      display:flex; align-items:center; gap:8px;
+      font-weight:800; font-size:18px; color:var(--text);
+      letter-spacing:-0.025em; margin-bottom:14px;
+    }
+    .footer-logo svg { color: var(--accent-2); }
+    .footer-tagline { font-size:14px; color:var(--text-2); line-height:1.65; max-width:220px; margin-bottom:22px; }
+    .footer-social { display:flex; gap:9px; }
+    .social-btn {
+      width:34px; height:34px; border-radius:8px; background:var(--accent-10);
+      display:flex; align-items:center; justify-content:center; color:var(--accent-2); transition: all .18s;
+    }
+    .social-btn:hover { background:var(--accent-20); color:var(--text); }
+    .social-btn svg { width:16px; height:16px; }
+    .footer-col-title {
+      font-size:12px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase;
+      color:var(--text-3); margin-bottom:16px;
+    }
+    .footer-links { list-style:none; display:flex; flex-direction:column; gap:11px; }
+    .footer-links a { font-size:14px; color:var(--text-2); transition: color .18s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-bottom { display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-3); }
+    .footer-bottom-links { display:flex; gap:24px; }
+    .footer-bottom-links a { color:var(--text-3); transition: color .18s; }
+    .footer-bottom-links a:hover { color:var(--text-2); }
+
+    /* ── BACK TO TOP ── */
+    .back-to-top {
+      position: fixed; bottom: 32px; right: 32px;
+      width: 48px; height: 48px; border-radius: var(--r-sm);
+      background: #2F4156; color: #FFFFFF; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 90; opacity: 0; visibility: hidden; transform: translateY(20px);
+    }
+    .back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); }
+    .back-to-top:hover { background: #3a5170; transform: translateY(-4px); box-shadow: 0 12px 24px rgba(47,65,86,0.2); }
+
+    /* ── LEGAL / FAQ MODAL (identical to all pages) ── */
+    .kisa-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(47,65,86,0.45);
+      backdrop-filter: blur(4px); z-index: 900;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    .kisa-modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .kisa-modal {
+      position: fixed; inset: 0; z-index: 901;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; pointer-events: none;
+    }
+    .kisa-modal.open { pointer-events: all; }
+    .kisa-modal-inner {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg, 20px); box-shadow: 0 24px 64px rgba(47,65,86,0.18);
+      width: 100%; max-width: 680px; max-height: 82vh;
+      display: flex; flex-direction: column;
+      opacity: 0; transform: translateY(16px) scale(0.98);
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+    .kisa-modal.open .kisa-modal-inner { opacity: 1; transform: translateY(0) scale(1); }
+    .kisa-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 28px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .kisa-modal-title { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+    .kisa-modal-close {
+      width: 34px; height: 34px; border-radius: 8px; background: none; border: none;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-2, rgba(47,65,86,0.6)); cursor: pointer;
+      transition: background 0.15s, color 0.15s; flex-shrink: 0;
+    }
+    .kisa-modal-close:hover { background: var(--accent-10); color: var(--text); }
+    .kisa-modal-body {
+      overflow-y: auto; padding: 28px; font-size: 14px; line-height: 1.75;
+      color: var(--text-body, rgba(47,65,86,0.8)); scroll-behavior: smooth;
+    }
+    .kisa-modal-body::-webkit-scrollbar { width: 5px; }
+    .kisa-modal-body::-webkit-scrollbar-track { background: transparent; }
+    .kisa-modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    .kisa-modal-body h3 {
+      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-3, rgba(47,65,86,0.38)); margin: 28px 0 10px;
+    }
+    .kisa-modal-body h3:first-child { margin-top: 0; }
+    .kisa-modal-body p { margin-bottom: 12px; }
+    .kisa-modal-body p:last-child { margin-bottom: 0; }
+    .kisa-modal-body ul { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+    .kisa-modal-body ul li { padding-left: 16px; position: relative; }
+    .kisa-modal-body ul li::before {
+      content: ''; position: absolute; left: 0; top: 9px;
+      width: 5px; height: 5px; border-radius: 50%; background: var(--accent-2, #567C8D);
+    }
+    .kisa-modal-faq-item { border: 1px solid var(--border); border-radius: var(--r-sm, 12px); margin-bottom: 10px; overflow: hidden; }
+    .kisa-modal-faq-q {
+      width: 100%; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 18px; font-size: 14px; font-weight: 600;
+      color: var(--text); text-align: left; transition: background 0.15s;
+    }
+    .kisa-modal-faq-q:hover { background: var(--accent-10); }
+    .kisa-modal-faq-q svg { flex-shrink: 0; transition: transform 0.2s; color: var(--text-2); }
+    .kisa-modal-faq-item.open .kisa-modal-faq-q svg { transform: rotate(180deg); }
+    .kisa-modal-faq-a {
+      display: none; padding: 0 18px 16px; font-size: 14px; line-height: 1.7;
+      color: var(--text-body, rgba(47,65,86,0.8)); border-top: 1px solid var(--border); padding-top: 14px;
+    }
+    .kisa-modal-faq-item.open .kisa-modal-faq-a { display: block; }
+    .kisa-modal-updated { font-size: 12px; color: var(--text-3); margin-bottom: 20px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1000px) {
+      .map-layout { grid-template-columns: 1fr; }
+      .reports-panel { position: static; }
+    }
+    @media (max-width: 960px) {
+      .nav-links, .nav-divider, .account-wrap { display: none; }
+      .hamburger { display: flex; }
+      .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 18px; }
+      .map-toolbar { flex-direction: column; align-items: flex-start; }
+      .map-stage { aspect-ratio: 4/5; min-height: 360px; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer-bottom-links { flex-direction: column; gap: 8px; }
+      .kisa-modal-inner { max-height: 90vh; border-radius: 16px 16px 0 0; }
+      .kisa-modal { align-items: flex-end; padding: 0; }
+      .back-to-top { bottom: 24px; right: 24px; width: 44px; height: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="paw-progress" aria-hidden="true">
+    <div class="paw-progress-fill" id="pawProgressFill"></div>
+  </div>
+  <div class="wrap nav-inner">
+    <a href="/dashboard" class="nav-logo" aria-label="Kisa home">
+      <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
+      Kisa
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/livemap" class="active">Live Map</a></li>
+      <li><a href="/community">Cats</a></li>
+      <li><a href="/report">Report a Sighting</a></li>
+      <li><a href="/contact">Contact Us</a></li>
+    </ul>
+
+    <div class="nav-right">
+      <div class="nav-divider" aria-hidden="true"></div>
+      <div class="account-wrap">
+        <button class="account-btn" id="accountBtn" type="button"
+                aria-haspopup="true" aria-expanded="false" aria-controls="accountMenu"
+                aria-label="Account menu">
+          <img class="nav-pfp" id="navPfp" alt="Your profile picture">
+          <i data-lucide="circle-user-round" id="navIconFallback" style="width:22px;height:22px;"></i>
+        </button>
+        <div class="account-menu" id="accountMenu" role="menu">
+          <a href="/profile" role="menuitem">
+            <i data-lucide="user"></i> My Account
+          </a>
+          <div class="account-menu-divider"></div>
+          <a href="/auth/logout" id="logoutLink" role="menuitem">
+            <i data-lucide="log-out"></i> Log Out
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <button class="hamburger" id="hamburger"
+            aria-label="Open navigation menu" aria-expanded="false"
+            aria-controls="mobileMenu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
+  <a href="/livemap" class="active"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i> Cats</a>
+  <a href="/report"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
+  <a href="/contact"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
+  <div class="mob-divider"></div>
+  <a href="/profile"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
+  <div class="mob-divider"></div>
+  <a href="/auth/logout" id="logoutLinkMobile"><i data-lucide="log-out" style="width:18px;height:18px;"></i> Log Out</a>
+</div>
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="page-hero-row">
+      <div>
+        <div class="eyebrow"><i data-lucide="map-pin"></i> Community Reports</div>
+        <h1 class="heading heading-lg">Live Map</h1>
+        <p class="hero-sub">Every pin is a sighting someone in your community actually reported. SOS reports are surfaced first so urgent cases never get buried.</p>
+      </div>
+      <a href="/report" class="btn btn-primary">
+        <i data-lucide="plus-circle"></i> Report a Sighting
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="map-section">
+  <div class="wrap">
+    <div class="map-layout">
+
+      <div class="map-panel">
+        <div class="map-toolbar">
+          <div class="filter-chips" id="filterChips" role="group" aria-label="Filter reports by status">
+            <button class="filter-chip active" data-filter="all" type="button">
+              All <span class="chip-count" id="count-all">0</span>
+            </button>
+            <button class="filter-chip" data-filter="sos" type="button">
+              SOS <span class="chip-count" id="count-sos">0</span>
+            </button>
+            <button class="filter-chip" data-filter="needs-care" type="button">
+              Needs Care <span class="chip-count" id="count-needs-care">0</span>
+            </button>
+            <button class="filter-chip" data-filter="safe" type="button">
+              Safe <span class="chip-count" id="count-safe">0</span>
+            </button>
+          </div>
+          <span class="map-updated" id="mapUpdated">Updated just now</span>
+        </div>
+
+        <div class="map-stage-wrap">
+          <div class="map-stage" id="mapStage" role="img" aria-label="Map of reported cat sightings in the community">
+            <div class="map-grid-bg" aria-hidden="true"></div>
+            <div class="map-roads-bg" aria-hidden="true"></div>
+            <div class="map-caption">Map integration — coming soon</div>
+            </div>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-swatch sos"></span> SOS — urgent</div>
+          <div class="legend-item"><span class="legend-swatch needs-care"></span> Needs Care</div>
+          <div class="legend-item"><span class="legend-swatch safe"></span> Safe</div>
+        </div>
+      </div>
+
+      <aside class="reports-panel" aria-label="Latest reports">
+        <div class="reports-panel-header">
+          <div class="reports-panel-title">Latest Reports</div>
+          <div class="reports-panel-sub" id="reportsSummary">Loading…</div>
+        </div>
+        <div class="reports-list" id="reportsList"></div>
+        <div class="reports-empty" id="reportsEmpty">No reports match this filter.</div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">
+          <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
+          Kisa
+        </div>
+        <p class="footer-tagline">Our community, our cats, always connected with love.</p>
+        <div class="footer-social">
+          <a href="https://x.com" class="social-btn" aria-label="X" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+            </svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/>
+              <circle cx="17.5" cy="6.5" r="1.5"/>
+            </svg>
+          </a>
+          <a href="#" class="social-btn" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-links">
+          <li><a href="/community">Cats</a></li>
+          <li><a href="/report">Report Sighting</a></li>
+          <li><a href="/livemap">Live Map</a></li>
+          <li><a href="/about">About Us</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Community</div>
+        <ul class="footer-links">
+          <li><a href="/faq">FAQ</a></li>
+          <li><a href="/contact">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/cookies">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Kisa. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<button id="backToTop" class="back-to-top" aria-label="Back to top">
+  <i data-lucide="arrow-up" style="width:20px;height:20px;"></i>
+</button>
+
+<div class="kisa-modal-backdrop" id="kisaModalBackdrop" aria-hidden="true"></div>
+<div class="kisa-modal" id="kisaModal" role="dialog" aria-modal="true" aria-labelledby="kisaModalTitle" style="display:none;">
+  <div class="kisa-modal-inner">
+    <div class="kisa-modal-header">
+      <h2 class="kisa-modal-title" id="kisaModalTitle"></h2>
+      <button class="kisa-modal-close" id="kisaModalClose" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="kisa-modal-body" id="kisaModalBody"></div>
+  </div>
+</div>
+
+<script>
+  /* ── Icons ── */
+  document.addEventListener('DOMContentLoaded', function () { if (window.lucide) lucide.createIcons(); });
+  if (document.readyState !== 'loading' && window.lucide) lucide.createIcons();
+
+  /* ── Paw scroll progress bar ── */
+  (function () {
+    var fill = document.getElementById('pawProgressFill');
+    if (!fill) return;
+    function update() {
+      var scrollTop = window.scrollY || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      fill.style.width = Math.min(100, (scrollTop / docHeight) * 100) + '%';
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+
+  /* ── Dynamic profile picture (kisa_avatar, matches profile.html) ── */
+  (function () {
+    var AVATAR_KEY = 'kisa_avatar';
+    var navPfp = document.getElementById('navPfp');
+    var navFallback = document.getElementById('navIconFallback');
+    if (!navPfp || !navFallback) return;
+    var stored = null;
+    try { stored = localStorage.getItem(AVATAR_KEY); } catch (e) {}
+    if (stored) {
+      navPfp.src = stored;
+      navPfp.classList.add('loaded');
+      navFallback.classList.add('hidden');
+    }
+  })();
+
+  /* ── Account dropdown ── */
+  (function () {
+    var btn = document.getElementById('accountBtn');
+    var menu = document.getElementById('accountMenu');
+    if (!btn || !menu) return;
+    function close() { menu.classList.remove('open'); btn.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+    function open()  { menu.classList.add('open');    btn.classList.add('open');    btn.setAttribute('aria-expanded','true'); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); menu.classList.contains('open') ? close() : open(); });
+    document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+
+  /* ── Logout ──
+     GET /auth/logout clears the sb_access_token / sb_refresh_token
+     HttpOnly cookies server-side and redirects to /login. The links
+     point straight at that route (href="/auth/logout"), so no click
+     handler is needed here. */
+
+  /* ── Hamburger ── */
+  (function () {
+    var btn = document.getElementById('hamburger');
+    var menu = document.getElementById('mobileMenu');
+    if (!btn || !menu) return;
+    function closeMenu() {
+      menu.classList.remove('open'); btn.classList.remove('open');
+      btn.setAttribute('aria-expanded','false'); document.body.style.overflow = '';
+    }
+    btn.addEventListener('click', function () {
+      var isOpen = menu.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      btn.setAttribute('aria-expanded', String(isOpen));
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+    menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeMenu); });
+    var desktopMQ = window.matchMedia('(min-width: 961px)');
+    var mqHandler = function (e) { if (e.matches) closeMenu(); };
+    if (desktopMQ.addEventListener) desktopMQ.addEventListener('change', mqHandler);
+    else desktopMQ.addListener(mqHandler);
+  })();
+
+  /* ── Back to top ── */
+  (function () {
+    var btn = document.getElementById('backToTop');
+    if (!btn) return;
+    window.addEventListener('scroll', function () { btn.classList.toggle('show', window.scrollY > 400); });
+    btn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  })();
+
+  /* ══════════════════════════════════════
+     LIVE MAP — reports data, rendering, filtering
+     No fabricated stats: this mirrors the sightings
+     already reflected in this project's community feed.
+  ══════════════════════════════════════ */
+  (function () {
+    var REPORTS = [
+      { id:'r2', name:'Shadow',   status:'sos',         area:'North Avenue',               note:'Limping near the corner store, rescue team dispatched.',            minutesAgo:14,  top:46, left:22, initials:'SH', color:'#2F4156' },
+      { id:'r3', name:'Luna',     status:'needs-care',  area:'Elm Road Community Garden',  note:'Shy grey cat, may be pregnant, sheltering near the garden shed.',    minutesAgo:300, top:70, left:74, initials:'LU', color:'#3a6070' },
+      { id:'r4', name:'Whiskers', status:'needs-care',  area:'Riverside Park, East Gate',   note:'Thin and cautious, seen in the same spot for two days running.',    minutesAgo:210, top:80, left:38, initials:'WH', color:'#3a6070' },
+      { id:'r1', name:'Captain',  status:'safe',        area:'Maple St & 3rd Ave',         note:'Safely caught by the rescue team, now getting care for his paw.',   minutesAgo:480, top:30, left:64, initials:'CA', color:'#567C8D' },
+      { id:'r5', name:'Biscuit',  status:'safe',        area:'Old Market Quarter',         note:'Friendly ginger tom, a regular near the bakery entrance.',          minutesAgo:120, top:18, left:32, initials:'BI', color:'#567C8D' },
+      { id:'r6', name:'Mittens',  status:'safe',        area:'Market Street',              note:'Healthy and social, comes right up to people without hesitation.',  minutesAgo:120, top:54, left:48, initials:'MI', color:'#567C8D' },
+      { id:'r7', name:'Mochi',    status:'safe',        area:'Riverside Park, Fountain',   note:'Reunited with her microchip-registered owner, thanks to the community.', minutesAgo:1440, top:34, left:87, initials:'MO', color:'#567C8D' }
+    ];
+
+    var STATUS_LABEL = { sos:'SOS', 'needs-care':'Needs Care', safe:'Safe' };
+    var STATUS_ORDER  = { sos:0, 'needs-care':1, safe:2 };
+    var STATUS_ICON   = { sos:'alert-triangle', 'needs-care':'thermometer', safe:'check-circle' };
+
+    function timeAgoLabel(mins) {
+      if (mins < 60) return mins + ' min ago';
+      var hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+      var days = Math.round(hrs / 24);
+      return days + (days === 1 ? ' day ago' : ' days ago');
+    }
+
+    var mapStage = document.getElementById('mapStage');
+    var reportsList = document.getElementById('reportsList');
+    var reportsEmpty = document.getElementById('reportsEmpty');
+    var reportsSummary = document.getElementById('reportsSummary');
+
+    /* Build a <i data-lucide="..."> element for a fixed, internally-defined icon name.
+       Never pass user-supplied strings here — icon names always come from STATUS_ICON. */
+    function iconEl(name) {
+      var i = document.createElement('i');
+      i.setAttribute('data-lucide', name);
+      return i;
+    }
+
+    /* SECURITY: report fields (name, area, note, initials) will come from
+       user-submitted sighting reports once this map is wired to the
+       backend's sightings data (see integration TODOs elsewhere in this file).
+       Every one of those fields is untrusted input, so it is written with
+       textContent / DOM node creation below — never innerHTML — to rule out
+       stored XSS regardless of what a submitted report contains. */
+
+    /* Render map pins */
+    REPORTS.forEach(function (r) {
+      var pin = document.createElement('div');
+      pin.className = 'map-pin status-' + r.status;
+      pin.style.top = r.top + '%';
+      pin.style.left = r.left + '%';
+      pin.dataset.id = r.id;
+      pin.dataset.status = r.status;
+      pin.setAttribute('role', 'button');
+      pin.setAttribute('tabindex', '0');
+      pin.setAttribute('aria-label', STATUS_LABEL[r.status] + ': ' + r.name + ', ' + r.area);
+
+      var marker = document.createElement('div');
+      marker.className = 'map-pin-marker';
+      marker.appendChild(iconEl(STATUS_ICON[r.status]));
+
+      var label = document.createElement('div');
+      label.className = 'map-pin-label';
+      label.textContent = STATUS_LABEL[r.status] + ': ' + r.name;
+
+      pin.appendChild(marker);
+      pin.appendChild(label);
+      mapStage.appendChild(pin);
+    });
+
+    /* Sort: SOS first, then Needs Care, then Safe — most recent within each group */
+    var sorted = REPORTS.slice().sort(function (a, b) {
+      if (STATUS_ORDER[a.status] !== STATUS_ORDER[b.status]) return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      return a.minutesAgo - b.minutesAgo;
+    });
+
+    /* Render report cards */
+    sorted.forEach(function (r) {
+      var card = document.createElement('div');
+      card.className = 'report-card status-' + r.status;
+      card.dataset.id = r.id;
+      card.dataset.status = r.status;
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+
+      var avatar = document.createElement('div');
+      avatar.className = 'report-avatar';
+      avatar.style.background = /^#[0-9A-Fa-f]{3,8}$/.test(r.color) ? r.color : '#567C8D';
+      avatar.textContent = r.initials;
+
+      var body = document.createElement('div');
+      body.className = 'report-body';
+
+      var topRow = document.createElement('div');
+      topRow.className = 'report-top-row';
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'report-name';
+      nameSpan.textContent = r.name;
+      var badge = document.createElement('span');
+      badge.className = 'badge badge-' + r.status;
+      badge.textContent = STATUS_LABEL[r.status];
+      topRow.appendChild(nameSpan);
+      topRow.appendChild(badge);
+
+      var loc = document.createElement('div');
+      loc.className = 'report-loc';
+      loc.appendChild(iconEl('map-pin'));
+      var locSpan = document.createElement('span');
+      locSpan.textContent = r.area;
+      loc.appendChild(locSpan);
+
+      var note = document.createElement('p');
+      note.className = 'report-note';
+      note.textContent = r.note;
+
+      var time = document.createElement('div');
+      time.className = 'report-time';
+      time.appendChild(iconEl('clock'));
+      var timeSpan = document.createElement('span');
+      timeSpan.textContent = timeAgoLabel(r.minutesAgo);
+      time.appendChild(timeSpan);
+
+      body.appendChild(topRow);
+      body.appendChild(loc);
+      body.appendChild(note);
+      body.appendChild(time);
+      card.appendChild(avatar);
+      card.appendChild(body);
+      reportsList.appendChild(card);
+    });
+
+    if (window.lucide) lucide.createIcons();
+
+    /* Counts */
+    var counts = { all: REPORTS.length, sos:0, 'needs-care':0, safe:0 };
+    REPORTS.forEach(function (r) { counts[r.status]++; });
+    document.getElementById('count-all').textContent = counts.all;
+    document.getElementById('count-sos').textContent = counts.sos;
+    document.getElementById('count-needs-care').textContent = counts['needs-care'];
+    document.getElementById('count-safe').textContent = counts.safe;
+    reportsSummary.textContent = counts.all + ' active reports · ' + counts.sos + ' SOS';
+
+    /* Filtering */
+    var chips = document.querySelectorAll('.filter-chip');
+    var pins = document.querySelectorAll('.map-pin');
+    var cards = document.querySelectorAll('.report-card');
+
+    function applyFilter(filter) {
+      var visibleCount = 0;
+      pins.forEach(function (p) {
+        var match = filter === 'all' || p.dataset.status === filter;
+        p.classList.toggle('filtered-out', !match);
+      });
+      cards.forEach(function (c) {
+        var match = filter === 'all' || c.dataset.status === filter;
+        c.classList.toggle('filtered-out', !match);
+        if (match) visibleCount++;
+      });
+      reportsEmpty.classList.toggle('show', visibleCount === 0);
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        applyFilter(chip.dataset.filter);
+      });
+    });
+
+    /* Cross-highlight: pin <-> card */
+    function clearActive() {
+      pins.forEach(function (p) { p.classList.remove('active'); });
+      cards.forEach(function (c) { c.classList.remove('active'); });
+    }
+    function highlight(id) {
+      clearActive();
+      var pin = mapStage.querySelector('.map-pin[data-id="' + id + '"]');
+      var card = reportsList.querySelector('.report-card[data-id="' + id + '"]');
+      if (pin) pin.classList.add('active');
+      if (card) { card.classList.add('active'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+    }
+    pins.forEach(function (p) {
+      p.addEventListener('click', function () { highlight(p.dataset.id); });
+      p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); highlight(p.dataset.id); } });
+    });
+    cards.forEach(function (c) {
+      c.addEventListener('click', function () { highlight(c.dataset.id); });
+      c.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); highlight(c.dataset.id); } });
+    });
+  })();
+
+  /* ── Paw cursor trail (desktop only, matched to dashboard.html) ── */
+  (function() {
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    let lastX = 0, lastY = 0;
+    const distanceThreshold = 110;
+    const style = document.createElement('style');
+    style.textContent = `
+      .paw-trail {
+        position: fixed; pointer-events: none; z-index: 9999;
+        width: 14px; height: 14px; color: var(--accent-2);
+        opacity: 0; transform: scale(0.6);
+        transition: opacity 0.4s ease-out, transform 1.2s cubic-bezier(0.2, 0, 0.2, 1);
+        user-select: none;
+      }
+      .paw-trail.active { opacity: 0.45; transform: scale(1); }
+      .paw-trail.fade { opacity: 0; transform: scale(0.8) translateY(4px); }
+    `;
+    document.head.appendChild(style);
+    
+    const pawSvg = `
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.5 10c1.38 0 2.5-1.12 2.5-2.5S9.88 5 8.5 5 6 6.12 6 7.5 7.12 10 8.5 10zm7 0c1.38 0 2.5-1.12 2.5-2.5S16.88 5 15.5 5 13 6.12 13 7.5s1.12 2.5 2.5 2.5zM4.5 15c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm15 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM12 11c-3.31 0-6 2.69-6 6 0 2.21 1.79 4 4 4h4c2.21 0 4-1.79 4-4 0-3.31-2.69-6-6-6z"/>
+      </svg>
+    `;
+
+    document.addEventListener('mousemove', function(e) {
+      const distance = Math.sqrt(Math.pow(e.clientX - lastX, 2) + Math.pow(e.clientY - lastY, 2));
+      if (distance > distanceThreshold) {
+        createPaw(e.clientX, e.clientY);
+        lastX = e.clientX; lastY = e.clientY;
+      }
+    });
+
+    function createPaw(x, y) {
+      const paw = document.createElement('div');
+      paw.className = 'paw-trail';
+      paw.innerHTML = pawSvg;
+      paw.style.left = (x - 7) + 'px';
+      paw.style.top = (y - 7) + 'px';
+      const rotation = Math.random() * 60 - 30;
+      paw.style.transform += ` rotate(${rotation}deg)`;
+      document.body.appendChild(paw);
+      
+      requestAnimationFrame(() => {
+        paw.classList.add('active');
+      });
+
+      setTimeout(() => {
+        paw.classList.add('fade');
+        setTimeout(() => { paw.remove(); }, 1200);
+      }, 1000);
+    }
+  })();
+</script>
+
+<script>
+(function () {
+  var CONTENT = {
+    privacy: {
+      title: 'Privacy Policy',
+      html: `
+        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
+        <h3>Who We Are</h3>
+        <p>Kisa is a community platform for tracking, reporting, and supporting stray and community cats. We are committed to protecting your personal information and being transparent about how we use it.</p>
+        <h3>Information We Collect</h3>
+        <p>When you use Kisa, we may collect the following information:</p>
+        <ul>
+          <li>Account information you provide when registering (name, email address, profile photo)</li>
+          <li>Sighting reports including location data, photos, and cat condition details you choose to submit</li>
+          <li>Usage data such as pages visited, features used, and time spent on the platform</li>
+          <li>Device information including browser type, operating system, and IP address</li>
+          <li>Communications you send to us or post within the platform</li>
+        </ul>
+        <h3>How We Use Your Information</h3>
+        <p>We use the information we collect to:</p>
+        <ul>
+          <li>Operate and improve the Kisa platform and its features</li>
+          <li>Display cat sightings on the live map and community feed</li>
+          <li>Send notifications about sightings, rescues, or updates you have opted into</li>
+          <li>Maintain platform safety and prevent misuse</li>
+          <li>Respond to your support requests and enquiries</li>
+          <li>Comply with our legal obligations</li>
+        </ul>
+        <h3>Location Data</h3>
+        <p>If you choose to report a sighting using your live location, we collect the geographic coordinates you submit. You may also enter a location manually. We do not track your location continuously or in the background. Location data attached to sighting reports is visible to other platform users as part of the community map.</p>
+        <h3>Photos and Uploads</h3>
+        <p>Photos you upload are stored on our servers and may be visible to other users as part of sighting reports and cat profiles. We do not sell or license your uploaded content to third parties. You retain ownership of photos you upload and grant Kisa a non-exclusive licence to display them within the platform.</p>
+        <h3>Data Sharing</h3>
+        <p>We do not sell your personal data. We may share data with:</p>
+        <ul>
+          <li>Service providers who help us operate the platform (such as cloud hosting and analytics), under strict data processing agreements</li>
+          <li>Law enforcement or regulatory bodies where required by law</li>
+          <li>Other users, only for content you have chosen to make public (such as sighting reports and comments)</li>
+        </ul>
+        <h3>Data Retention</h3>
+        <p>We retain your account data for as long as your account is active. If you delete your account, we will remove your personal information within 30 days, except where we are required by law to retain it. Sighting reports you have submitted may remain on the platform in anonymised form to preserve community cat history.</p>
+        <h3>Your Rights</h3>
+        <p>Depending on where you live, you may have the right to access, correct, or delete the personal data we hold about you. You may also have the right to object to certain processing or to request a copy of your data in a portable format. To exercise any of these rights, contact us at privacy@kisa.app.</p>
+        <h3>Cookies</h3>
+        <p>Kisa uses essential cookies to keep you signed in and maintain your session. We may also use analytics cookies to understand how the platform is used and improve it. You can control cookie preferences through your browser settings. Disabling essential cookies may affect platform functionality.</p>
+        <h3>Security</h3>
+        <p>We take reasonable technical and organisational measures to protect your data against unauthorised access, loss, or disclosure. However, no system is completely secure and we cannot guarantee absolute security.</p>
+        <h3>Children</h3>
+        <p>Kisa is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us and we will delete it.</p>
+        <h3>Changes to This Policy</h3>
+        <p>We may update this Privacy Policy from time to time. We will notify registered users of significant changes by email or via an in-platform notice. Continued use of Kisa after changes are posted constitutes acceptance of the updated policy.</p>
+        <h3>Contact Us</h3>
+        <p>For any privacy-related questions or requests, please contact us at privacy@kisa.app.</p>
+      `
+    },
+    terms: {
+      title: 'Terms of Service',
+      html: `
+        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
+        <h3>Acceptance of Terms</h3>
+        <p>By accessing or using Kisa, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform. We may update these terms from time to time and will notify you of material changes.</p>
+        <h3>The Kisa Platform</h3>
+        <p>Kisa is a community tool designed to help people report, track, and support stray and community cats in their neighbourhood. The platform allows users to submit sighting reports, view a live map of cat activity, and interact with others in the community feed.</p>
+        <h3>Eligibility</h3>
+        <p>You must be at least 13 years old to use Kisa. By using the platform you confirm that you meet this requirement. If you are under 18, you should use the platform with the knowledge and permission of a parent or guardian.</p>
+        <h3>Your Account</h3>
+        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You must not share your account with others or use another person's account without their permission. Notify us immediately at support@kisa.app if you suspect unauthorised access to your account.</p>
+        <h3>Acceptable Use</h3>
+        <p>When using Kisa, you agree not to:</p>
+        <ul>
+          <li>Submit false, misleading, or fabricated sighting reports</li>
+          <li>Upload content that is offensive, abusive, or violates any person's rights</li>
+          <li>Use the platform to harass, threaten, or intimidate any individual</li>
+          <li>Attempt to access, scrape, or extract data from the platform in an unauthorised manner</li>
+          <li>Use the platform for any commercial purpose without our prior written consent</li>
+          <li>Upload content that infringes third-party intellectual property rights</li>
+          <li>Attempt to compromise the security or integrity of the platform</li>
+        </ul>
+        <h3>User Content</h3>
+        <p>You retain ownership of content you submit to Kisa, including photos, sighting descriptions, and comments. By submitting content, you grant Kisa a non-exclusive, royalty-free, worldwide licence to display, reproduce, and distribute your content within the platform for the purposes of operating the service.</p>
+        <p>You are solely responsible for the content you post. Kisa does not verify the accuracy of user-submitted sighting reports and cannot be held responsible for actions taken based on community information.</p>
+        <h3>Animal Welfare</h3>
+        <p>Kisa is committed to the welfare of cats. Users must not use the platform to facilitate any harm to animals. Reports of animal cruelty should be directed to the appropriate local authority or animal welfare organisation. We reserve the right to remove content and ban users who we believe are misusing the platform to harm animals.</p>
+        <h3>Moderation</h3>
+        <p>We reserve the right to remove any content that violates these terms or that we determine, in our sole discretion, to be harmful, false, or inappropriate. We may suspend or terminate accounts that repeatedly violate these terms or that we believe pose a risk to the community.</p>
+        <h3>Intellectual Property</h3>
+        <p>All Kisa branding, design, software, and original content is owned by Kisa and protected by applicable intellectual property laws. You may not copy, reproduce, or create derivative works from Kisa's proprietary content without our express written permission.</p>
+        <h3>Disclaimer of Warranties</h3>
+        <p>Kisa is provided on an "as is" and "as available" basis. We make no warranties, express or implied, regarding the accuracy, reliability, or availability of the platform. We do not guarantee that sighting reports are accurate or that the platform will be free from errors or interruptions.</p>
+        <h3>Limitation of Liability</h3>
+        <p>To the fullest extent permitted by law, Kisa shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of or inability to use the platform, including any damages resulting from reliance on community-submitted information.</p>
+        <h3>Termination</h3>
+        <p>You may delete your account at any time through the platform settings. We may suspend or terminate your access at any time if we believe you have violated these terms, with or without notice.</p>
+        <h3>Governing Law</h3>
+        <p>These terms shall be governed by and construed in accordance with applicable law. Any disputes shall be subject to the exclusive jurisdiction of the courts in the relevant territory.</p>
+        <h3>Contact Us</h3>
+        <p>For questions about these terms, please contact us at support@kisa.app.</p>
+      `
+    },
+    faq: {
+      title: 'Frequently Asked Questions',
+      html: `
+        <p style="color:var(--text-2);margin-bottom:24px;">Got a question about Kisa? Find answers to the most common ones below.</p>
+        <div id="kisaFaqAccordion"></div>
+      `,
+      faqs: [
+        { q: 'What is Kisa?', a: 'Kisa is a community platform for tracking and supporting stray and community cats in your neighbourhood. Anyone can report a sighting, and the community works together to monitor, feed, and rescue cats that need help.' },
+        { q: 'Is Kisa free to use?', a: 'Yes, Kisa is completely free for all community members. Create an account and start reporting sightings straight away.' },
+        { q: 'How do I report a cat sighting?', a: 'Once you are signed in, click "Report a Sighting" in the navigation bar. Fill in the details including a photo, location, and the cat\'s condition, then submit. Your report will appear on the live map and in the community feed.' },
+        { q: 'Do I need an account to browse the map?', a: 'You can view the live map and browse cat profiles without an account. However, you need to be signed in to submit reports, like posts, or leave comments.' },
+        { q: 'What does SOS mean?', a: 'SOS indicates a cat that needs urgent veterinary attention or rescue. If you spot a cat in an SOS condition, please also contact your local animal welfare organisation or a vet as soon as possible.' },
+        { q: 'Can I report a cat as adopted or taken in?', a: 'Yes. On any community post, you can use the "I\'ve taken them in" option to update the community that the cat is safe. This helps prevent duplicate rescue attempts and keeps the community informed.' },
+        { q: 'How is my location data used?', a: 'Your location is only collected when you submit a sighting report, and only the location you provide is stored. We do not track your location in the background. See our Privacy Policy for full details.' },
+        { q: 'How do I delete my account?', a: 'You can delete your account from the Settings page. This will remove your personal information within 30 days. Some sighting reports may remain in anonymised form to preserve community cat history.' },
+        { q: 'How do I report inappropriate content?', a: 'Use the report option on any post or comment. Our moderation team reviews reports and takes action in line with our Terms of Service.' },
+        { q: 'How can I get in touch with the Kisa team?', a: 'You can reach us at support@kisa.app. We aim to respond within 2 business days.' }
+      ]
+    },
+    cookies: {
+      title: 'Cookie Policy',
+      html: `
+        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
+        <h3>What Are Cookies</h3>
+        <p>Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit, such as your login status and preferences.</p>
+        <h3>Cookies We Use</h3>
+        <p>Kisa uses a minimal set of cookies:</p>
+        <ul>
+          <li><strong>Essential cookies</strong> - Required for the platform to function. These include your session cookie that keeps you signed in. You cannot opt out of essential cookies without affecting platform functionality.</li>
+          <li><strong>Analytics cookies</strong> - Help us understand how the platform is used so we can improve it. These collect anonymised usage data such as pages visited and features used.</li>
+          <li><strong>Preference cookies</strong> - Remember your settings and preferences, such as display mode.</li>
+        </ul>
+        <h3>Managing Cookies</h3>
+        <p>You can control and delete cookies through your browser settings. Please note that disabling essential cookies will affect your ability to use Kisa, including staying signed in. For instructions on managing cookies in your browser, refer to your browser's help documentation.</p>
+        <h3>Third-Party Cookies</h3>
+        <p>We use a small number of trusted third-party services to help operate Kisa, such as analytics providers. These services may set their own cookies. We do not allow third-party advertising cookies on Kisa.</p>
+        <h3>Changes</h3>
+        <p>We may update this Cookie Policy as the platform evolves. Any significant changes will be communicated through an in-platform notice.</p>
+        <h3>Contact</h3>
+        <p>For questions about our use of cookies, contact us at privacy@kisa.app.</p>
+      `
+    }
+  };
+
+  function buildFaqHtml(faqs) {
+    return faqs.map(function(item, i) {
+      return '<div class="kisa-modal-faq-item" data-faq="' + i + '">' +
+        '<button class="kisa-modal-faq-q" type="button">' +
+          item.q +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</button>' +
+        '<div class="kisa-modal-faq-a">' + item.a + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openModal(type) {
+    var data = CONTENT[type];
+    if (!data) return;
+    var modal    = document.getElementById('kisaModal');
+    var backdrop = document.getElementById('kisaModalBackdrop');
+    var title    = document.getElementById('kisaModalTitle');
+    var body     = document.getElementById('kisaModalBody');
+    title.textContent = data.title;
+    body.innerHTML    = data.html;
+    if (type === 'faq' && data.faqs) {
+      var acc = document.getElementById('kisaFaqAccordion');
+      if (acc) {
+        acc.innerHTML = buildFaqHtml(data.faqs);
+        acc.addEventListener('click', function(e) {
+          var btn = e.target.closest('.kisa-modal-faq-q');
+          if (!btn) return;
+          var item = btn.closest('.kisa-modal-faq-item');
+          var wasOpen = item.classList.contains('open');
+          acc.querySelectorAll('.kisa-modal-faq-item').forEach(function(el) { el.classList.remove('open'); });
+          if (!wasOpen) item.classList.add('open');
+        });
+      }
+    }
+    modal.style.display = 'flex';
+    backdrop.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        modal.classList.add('open');
+        backdrop.classList.add('open');
+        if (window.lucide) lucide.createIcons();
+      });
+    });
+    body.scrollTop = 0;
+  }
+
+  function closeModal() {
+    var modal    = document.getElementById('kisaModal');
+    var backdrop = document.getElementById('kisaModalBackdrop');
+    modal.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(function() {
+      modal.style.display = 'none';
+      backdrop.style.display = 'none';
+    }, 250);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[href="/privacy"], a[href="/terms"], a[href="/faq"], a[href="/cookies"]').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        var map = { '/privacy': 'privacy', '/terms': 'terms', '/faq': 'faq', '/cookies': 'cookies' };
+        openModal(map[el.getAttribute('href')]);
+      });
+    });
+    document.getElementById('kisaModalClose').addEventListener('click', closeModal);
+    document.getElementById('kisaModalBackdrop').addEventListener('click', closeModal);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+  });
+
+  window.kisaOpenModal = openModal;
+})();
+</script>
+
+</body>
+</html>
+

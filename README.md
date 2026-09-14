@@ -8,6 +8,41 @@ Kisa gives that scattered care one shared place to live. Spot a cat, log a sight
 
 Built for #hackthekitty 2026. 
 
+> Pre-requisites you'll need
+
+- Python 3.12
+- Supabase Library
+- fastapi
+- uvicorn
+- jinja2
+- python-dotenv
+- python-multipart
+- supabase
+- httpx
+- pydantic
+- google-generativeai
+
+
+
+Instructions -> 
+
+1. Create a virtual enviroment 
+
+cd E:\Kisa\kisa\backend
+python -m venv .venv
+.venv\Scripts\activate
+
+2. Install dependencies 
+
+pip install -r requirements.txt
+
+3. Run the server
+
+cd E:\Kisa\kisa\backend
+uvicorn app.main:app --reload
+
+**Open it on : http://127.0.0.1:8000**
+
 > What's in it
 
 1. **Report a Sighting**: pin a location, add a photo, note how the cat looked. Healthy, Needs Care, Injured, or Emergency (SOS), with a clear warning when SOS is selected.
@@ -21,7 +56,13 @@ Built for #hackthekitty 2026.
 - A volunteer feature on the community page, so rescues can sign up and actually get involved.
 - A map feature where the user can find nearby local animal help centres and contact them. 
 
+> Disclaimer :
+
+This project is only a demo version of the actual Kisa web app. The data used is mock data for show purposes. 
+
 > *Screenshots*
 
 <img width="1900" height="908" alt="Kisa-mainpage" src="https://github.com/user-attachments/assets/f5b9961a-7521-4a53-86f3-da2f16a21637" />
 <img width="1705" height="912" alt="Kisa-Community" src="https://github.com/user-attachments/assets/bd702f8e-a620-40d7-9833-4edf3fbc8bf3" />
+<img width="1920" height="913" alt="kisa-livemap" src="https://github.com/user-attachments/assets/5e670711-c6f5-44f1-b1bc-965d587fb7f5" />
+
