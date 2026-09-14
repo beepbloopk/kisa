@@ -26,9 +26,9 @@ Built for #hackthekitty 2026.
 
 Instructions -> 
 
-1. Create a virtual enviroment 
+1. Create a virtual environment
 
-cd E:\Kisa\kisa\backend
+cd backend
 python -m venv .venv
 .venv\Scripts\activate
 
@@ -36,20 +36,34 @@ python -m venv .venv
 
 pip install -r requirements.txt
 
-3. Run the server
+3. Add your keys
 
-cd E:\Kisa\kisa\backend
+Copy .env.example to .env in the backend folder and fill in the values. Never commit .env: this repository is public.
+
+4. Run the server, still inside the backend folder
+
 uvicorn app.main:app --reload
 
 **Open it on : http://127.0.0.1:8000**
 
+> Running the frontend on its own
+
+The site in frontend/ is static and talks to Supabase directly, so it needs no backend:
+
+cd frontend
+python -m http.server 5173
+
+> Database setup
+
+Run the files in backend/migrations/ in order in the Supabase SQL Editor. The README in that folder explains each one.
+
 > What's in it
 
-1. **Report a Sighting** — pin a location, add a photo, note how the cat looked. Healthy, Needs Care, Injured, or Emergency (SOS), with a clear warning when SOS is selected.
-2. **Community feed** — sightings show up as posts with photos, status badges, likes, comments, and an "I've taken them in" option for anyone who ends up housing the cat.
-3. **SOS alerts** — an Emergency report is built to reach nearby volunteers fast, so a cat in real trouble isn't waiting on one person to notice.
-4. **Accounts** — sign up, log in, and a single account page with tabs for your profile, your reports, and settings.
-5. **A photo that sticks around** — upload a profile picture once and it's there every time you come back.
+1. **Report a Sighting**: pin a location, add a photo, note how the cat looked. Healthy, Needs Care, Injured, or Emergency (SOS), with a clear warning when SOS is selected.
+2. **Community feed**: sightings show up as posts with photos, status badges, likes, comments, and an "I've taken them in" option for anyone who ends up housing the cat.
+3. **SOS alerts**: an Emergency report is built to reach nearby volunteers fast, so a cat in real trouble isn't waiting on one person to notice.
+4. **Accounts**: sign up, log in, and a single account page with tabs for your profile, your reports, and settings.
+5. **A photo that sticks around**: upload a profile picture once and it's there every time you come back.
 
 > What's next
 

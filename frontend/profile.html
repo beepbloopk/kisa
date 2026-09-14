@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Kisa - My Account</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -147,7 +147,7 @@
     .nav-right { display: flex; align-items: center; gap: 6px; }
     .nav-divider { width: 1px; height: 18px; background: var(--border); margin: 0 6px; }
 
-    /* ACCOUNT BUTTON — shows icon OR pfp */
+    /* ACCOUNT BUTTON, shows icon OR pfp */
     .account-wrap { position: relative; }
     .account-btn {
       width: 36px;
@@ -447,6 +447,9 @@
 
     .input-icon-wrap { position: relative; }
     .input-icon-wrap .input { padding-left: 40px; }
+    /* Reserve room for the Verified badge on the right, otherwise a long
+       email address runs underneath it. */
+    .input-icon-wrap .input.has-badge { padding-right: 96px; }
     .input-icon-wrap .field-icon {
       position: absolute;
       left: 13px;
@@ -471,6 +474,41 @@
     }
     .verified-badge svg { width: 13px; height: 13px; }
 
+    .reports-loading { padding: 28px 0; text-align: center; font-size: 13px; color: var(--text-3); }
+    .reports-list { display: flex; flex-direction: column; gap: 12px; }
+    .report-card {
+      display: flex; gap: 14px; align-items: flex-start;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 14px; background: var(--surface);
+    }
+    .report-thumb { width: 66px; height: 66px; flex-shrink: 0; border-radius: 10px; object-fit: cover; background: var(--accent-10); }
+    .report-thumb-empty { display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+    .report-thumb-empty svg { width: 26px; height: 26px; }
+    .report-main { flex: 1; min-width: 0; }
+    .report-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+    .report-where { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .report-meta { font-size: 12px; color: var(--text-3); }
+    .report-desc { font-size: 13px; color: var(--text-body); margin-top: 6px; line-height: 1.5; }
+    .report-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .rb-healthy    { background: rgba(78,158,120,0.16); color: #3f8b66; }
+    .rb-needs-care { background: rgba(214,158,69,0.18); color: #a97620; }
+    .rb-injured    { background: rgba(214,110,69,0.18); color: #b1552c; }
+    .rb-sos        { background: rgba(214,69,69,0.18);  color: #b23b3b; }
+    .rb-pending    { background: var(--accent-10); color: var(--text-2); }
+    @media (prefers-color-scheme: dark) {
+      .rb-healthy { color: #7fc7a2; } .rb-needs-care { color: #e0b35c; }
+      .rb-injured { color: #e59470; } .rb-sos { color: #ef8a8a; }
+    }
+    .report-delete {
+      flex-shrink: 0; align-self: flex-start;
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); transition: background 0.15s, color 0.15s;
+    }
+    .report-delete svg { width: 16px; height: 16px; }
+    .report-delete:hover { background: rgba(214,69,69,0.12); color: #c0504a; }
+    .report-delete:disabled { opacity: 0.5; cursor: default; }
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -914,6 +952,13 @@
       .kisa-modal { align-items: flex-end; padding: 0; }
     }
   </style>
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14b">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14b" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14b" defer></script>
 </head>
 <body>
 
@@ -931,10 +976,10 @@
     </a>
 
     <ul class="nav-links">
-      <li><a href="/livemap">Live Map</a></li>
-      <li><a href="/community">Cats</a></li>
+      <li><a href="livemap.html">Live Map</a></li>
+      <li><a href="community.html">Cats</a></li>
       <li><a href="report.html">Report a Sighting</a></li>
-      <li><a href="/contact">Contact Us</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
     </ul>
 
     <div class="nav-right">
@@ -968,10 +1013,10 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
-  <a href="/livemap"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
-  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i> Cats</a>
+  <a href="livemap.html"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="community.html"><i data-lucide="search" style="width:18px;height:18px;"></i> Cats</a>
   <a href="report.html"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
-  <a href="/contact"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
+  <a href="contact.html"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
   <div class="mob-divider"></div>
   <a href="profile.html" class="active"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
   <div class="mob-divider"></div>
@@ -1031,7 +1076,7 @@
                 <button type="button" class="avatar-edit-btn" id="avatarEditBtn" aria-label="Change profile picture">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </button>
-                <input type="file" id="avatarInput" class="avatar-input" accept="image/png,image/jpeg,image/webp">
+                <input type="file" id="avatarInput" class="avatar-input" accept="image/png,image/jpeg,image/webp" aria-label="Upload a profile photo">
               </div>
               <div class="avatar-actions">
                 <button type="button" id="avatarChangeBtn">Change photo</button>
@@ -1053,11 +1098,11 @@
                   </div>
                   <div class="field">
                     <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" class="input" placeholder="Your full name" value="Alex" maxlength="60">
+                    <input type="text" id="fullName" class="input" placeholder="Your full name" maxlength="60">
                   </div>
                   <div class="field">
                     <label for="bio">Bio</label>
-                    <textarea id="bio" class="textarea" placeholder="Tell your community a bit about yourself — what you care about and how you help." maxlength="220"></textarea>
+                    <textarea id="bio" class="textarea" placeholder="Tell your community a bit about yourself: what you care about and how you help." maxlength="220"></textarea>
                     <div class="char-count"><span id="bioCount">0</span>/220</div>
                   </div>
                   <div class="field">
@@ -1083,8 +1128,8 @@
                       <label for="email">Email</label>
                       <div class="input-icon-wrap">
                         <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        <input type="email" id="email" class="input" value="user@example.com" disabled>
-                        <span class="verified-badge">
+                        <input type="email" id="email" class="input" value="" disabled>
+                        <span class="verified-badge" hidden>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                           Verified
                         </span>
@@ -1126,7 +1171,11 @@
             </a>
           </div>
 
-          <div class="empty-state" id="reportsEmptyState">
+          <div class="reports-list" id="reportsList" hidden></div>
+
+          <div class="reports-loading" id="reportsLoading">Loading your reports...</div>
+
+          <div class="empty-state" id="reportsEmptyState" hidden>
             <div class="empty-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </div>
@@ -1154,8 +1203,8 @@
               <label for="settingsEmail">Email address</label>
               <div class="input-icon-wrap">
                 <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <input type="email" id="settingsEmail" class="input" value="user@example.com" disabled>
-                <span class="verified-badge">
+                <input type="email" id="settingsEmail" class="input" value="" disabled>
+                <span class="verified-badge" hidden>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                   Verified
                 </span>
@@ -1329,9 +1378,9 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-links">
-          <li><a href="/community">Cats</a></li>
+          <li><a href="community.html">Cats</a></li>
           <li><a href="report.html">Report Sighting</a></li>
-          <li><a href="/livemap">Live Map</a></li>
+          <li><a href="livemap.html">Live Map</a></li>
           <li><a href="/about">About Us</a></li>
         </ul>
       </div>
@@ -1339,7 +1388,7 @@
         <div class="footer-col-title">Community</div>
         <ul class="footer-links">
           <li><a href="/faq">FAQ</a></li>
-          <li><a href="/contact">Contact Us</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
         </ul>
       </div>
       <div>
@@ -1364,18 +1413,6 @@
 </div>
 
 <!-- ══ LEGAL / FAQ POPUP MODALS MARKUP ══ -->
-<div class="kisa-modal-backdrop" id="kisaModalBackdrop" aria-hidden="true"></div>
-<div class="kisa-modal" id="kisaModal" role="dialog" aria-modal="true" aria-labelledby="kisaModalTitle" style="display:none;">
-  <div class="kisa-modal-inner">
-    <div class="kisa-modal-header">
-      <h2 class="kisa-modal-title" id="kisaModalTitle"></h2>
-      <button class="kisa-modal-close" id="kisaModalClose" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="kisa-modal-body" id="kisaModalBody"></div>
-  </div>
-</div>
 
 <!-- ══ SCRIPTS ══ -->
 <script>
@@ -1389,6 +1426,23 @@
   });
 
   /* Stored Avatar Logic */
+/* Only accept a real image data URL here. Nothing else should ever have
+     been written to this key, so anything else means the value was tampered
+     with and is not worth rendering. */
+  function isImageDataUrl(v) {
+    return typeof v === 'string' && /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+  }
+
+  /* Avatars now come back from Supabase storage as signed https URLs.
+     Accept those, and only from our own project, alongside data URLs. */
+  function isSafeImageSrc(v) {
+    if (isImageDataUrl(v)) return true;
+    var base = window.KISA_CONFIG && KISA_CONFIG.supabaseUrl;
+    return typeof v === 'string' && !!base && v.indexOf(base + '/storage/') === 0;
+  }
+
+  /* Photos set before avatars moved to Supabase were kept only in this
+     browser under this key. Read once, uploaded, then cleared. */
   var AVATAR_KEY = 'kisa_avatar';
 
   function loadStoredAvatar() {
@@ -1401,7 +1455,7 @@
     var navPfp = document.getElementById('navPfp');
     var navFallback = document.getElementById('navIconFallback');
     if (navPfp && navFallback) {
-      if (dataUrl) {
+      if (isSafeImageSrc(dataUrl)) {
         navPfp.src = dataUrl;
         navPfp.classList.add('loaded');
         navFallback.classList.add('hidden');
@@ -1415,7 +1469,7 @@
     var sbImg = document.getElementById('sidebarAvatarImg');
     var sbInitial = document.getElementById('sidebarInitial');
     if (sbImg && sbInitial) {
-      if (dataUrl) {
+      if (isSafeImageSrc(dataUrl)) {
         sbImg.src = dataUrl;
         sbImg.classList.add('loaded');
         sbInitial.classList.add('hidden');
@@ -1429,7 +1483,7 @@
     var avatarImg = document.getElementById('avatarImg');
     var avatarFallback = document.getElementById('avatarFallback');
     if (avatarImg && avatarFallback) {
-      if (dataUrl) {
+      if (isSafeImageSrc(dataUrl)) {
         avatarImg.src = dataUrl;
         avatarImg.style.display = 'block';
         avatarFallback.style.display = 'none';
@@ -1441,7 +1495,7 @@
     }
   }
 
-  applyAvatarEverywhere(loadStoredAvatar());
+  applyAvatarEverywhere(null);
 
   /* Avatar upload pickers */
   var avatarInput = document.getElementById('avatarInput');
@@ -1462,14 +1516,41 @@
         avatarInput.value = '';
         return;
       }
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var dataUrl = e.target.result;
-        try { localStorage.setItem(AVATAR_KEY, dataUrl); } catch (err) {}
-        applyAvatarEverywhere(dataUrl);
-        showToast('Profile photo updated');
-      };
-      reader.readAsDataURL(file);
+      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+        showToast('Please choose a PNG, JPG or WEBP image.');
+        avatarInput.value = '';
+        return;
+      }
+      if (!kisaUser) {
+        showToast('Please wait a moment and try again');
+        avatarInput.value = '';
+        return;
+      }
+      /* This used to write the image into localStorage and nowhere else, so
+         the photo existed only in this one browser. It goes to the avatars
+         bucket now, and the path is saved on the profile. */
+      var previous = kisaAvatarPath;
+      showToast('Uploading photo...');
+      KisaStore.profiles.uploadAvatar(kisaUser.id, file)
+        .then(function (path) {
+          return KisaStore.profiles.update(kisaUser.id, { avatar_url: path })
+            .then(function () { return path; });
+        })
+        .then(function (path) {
+          kisaAvatarPath = path;
+          /* A different file extension means a different file. Tidy the old one. */
+          if (previous && previous !== path) {
+            KisaStore.profiles.removeAvatar(previous).catch(function () {});
+          }
+          return KisaStore.profiles.avatarUrl(path);
+        })
+        .then(function (url) {
+          applyAvatarEverywhere(url);
+          try { localStorage.removeItem(AVATAR_KEY); } catch (err) {}
+          showToast('Profile photo updated');
+        })
+        .catch(function (err) { showToast(err.message || 'Could not upload that photo'); })
+        .then(function () { avatarInput.value = ''; });
     });
   }
 
@@ -1477,8 +1558,20 @@
     avatarRemoveBtn.addEventListener('click', function () {
       try { localStorage.removeItem(AVATAR_KEY); } catch (err) {}
       if (avatarInput) avatarInput.value = '';
-      applyAvatarEverywhere(null);
-      showToast('Profile photo removed');
+      if (!kisaUser || !kisaAvatarPath) {
+        applyAvatarEverywhere(null);
+        showToast('Profile photo removed');
+        return;
+      }
+      var old = kisaAvatarPath;
+      KisaStore.profiles.update(kisaUser.id, { avatar_url: null })
+        .then(function () {
+          kisaAvatarPath = null;
+          applyAvatarEverywhere(null);
+          showToast('Profile photo removed');
+          return KisaStore.profiles.removeAvatar(old);
+        })
+        .catch(function (err) { showToast(err.message || 'Could not remove your photo'); });
     });
   }
 
@@ -1522,7 +1615,36 @@
   if (profileForm) {
     profileForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      showToast('Profile saved');
+      if (!kisaUser) { showToast('Please sign in first'); return; }
+
+      var saveBtn = profileForm.querySelector('button[type="submit"]');
+      var label = saveBtn ? saveBtn.textContent : '';
+      var restore = function () {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = label; }
+      };
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      var phoneEl = document.getElementById('phone');
+      var fields = {
+        display_name: (fullNameInput.value || '').trim() || kisaUser.email,
+        phone: phoneEl ? ((phoneEl.value || '').trim() || null) : null
+      };
+      if (kisaProfileExtras) {
+        var locEl = document.getElementById('location');
+        fields.bio = bioInput ? ((bioInput.value || '').trim() || null) : null;
+        fields.location = locEl ? ((locEl.value || '').trim() || null) : null;
+      }
+
+      KisaStore.profiles.update(kisaUser.id, fields)
+        .then(function (row) {
+          restore();
+          showToast('Profile saved');
+          /* The navbar reads the name from the auth token, which does not
+             change when the profiles row does. Keep the two in step. */
+          return KisaStore.client().auth.updateUser({ data: { full_name: row.display_name } });
+        })
+        .then(function () { syncNameDisplay(); })
+        .catch(function (err) { restore(); showToast(err.message || 'Could not save your profile'); });
     });
   }
 
@@ -1534,7 +1656,256 @@
     });
   }
 
+  /* ---- Your Reports ---- */
+  var CONDITION_LABEL = {
+    'healthy': 'Healthy', 'needs-care': 'Needs Care',
+    'injured': 'Injured', 'sos': 'Emergency'
+  };
+
+  function formatWhen(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function reportCard(row) {
+    var card = document.createElement('div');
+    card.className = 'report-card';
+
+    var path = row.sighting_images && row.sighting_images[0] && row.sighting_images[0].storage_path;
+    if (path) {
+      var img = document.createElement('img');
+      img.className = 'report-thumb';
+      img.alt = '';
+      img.src = KisaStore.sightings.publicPhotoUrl(path);
+      card.appendChild(img);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = 'report-thumb report-thumb-empty';
+      ph.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c-4 0-7 3-7 7v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5c0-4-3-7-7-7z"/><path d="M5 12 4 6l4 2"/><path d="M19 12l1-6-4 2"/><circle cx="9.5" cy="13" r="0.6" fill="currentColor"/><circle cx="14.5" cy="13" r="0.6" fill="currentColor"/></svg>';
+      card.appendChild(ph);
+    }
+
+    var main = document.createElement('div');
+    main.className = 'report-main';
+
+    var top = document.createElement('div');
+    top.className = 'report-top';
+
+    /* textContent throughout: every value below was typed by a person. */
+    var where = document.createElement('span');
+    where.className = 'report-where';
+    where.textContent = row.location_text || 'Location on map';
+    top.appendChild(where);
+
+    if (row.condition) {
+      var badge = document.createElement('span');
+      badge.className = 'report-badge rb-' + row.condition;
+      badge.textContent = CONDITION_LABEL[row.condition] || row.condition;
+      top.appendChild(badge);
+    }
+    if (row.match_status === 'pending') {
+      var m = document.createElement('span');
+      m.className = 'report-badge rb-pending';
+      m.textContent = 'Awaiting match';
+      top.appendChild(m);
+    }
+    main.appendChild(top);
+
+    var meta = document.createElement('div');
+    meta.className = 'report-meta';
+    meta.textContent = 'Seen ' + formatWhen(row.sighted_date);
+    main.appendChild(meta);
+
+    if (row.description) {
+      var d = document.createElement('div');
+      d.className = 'report-desc';
+      d.textContent = row.description;
+      main.appendChild(d);
+    }
+
+    card.appendChild(main);
+
+    /* Delete a report you posted. RLS refuses anyone else's. */
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'report-delete';
+    del.title = 'Delete this report';
+    del.setAttribute('aria-label', 'Delete this report');
+    del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+      + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<polyline points="3 6 5 6 21 6"/>'
+      + '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'
+      + '<path d="M10 11v6"/><path d="M14 11v6"/>'
+      + '<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+    del.addEventListener('click', function () {
+      if (!window.confirm('Delete this report? Its photo, likes and comments go '
+                        + 'with it. This cannot be undone.')) return;
+      del.disabled = true;
+      KisaStore.sightings.remove(row.id).then(function () {
+        card.remove();
+        var list = document.getElementById('reportsList');
+        if (list && !list.querySelector('.report-card')) {
+          list.hidden = true;
+          var empty = document.getElementById('reportsEmptyState');
+          if (empty) empty.hidden = false;
+        }
+        showToast('Report deleted');
+      }).catch(function (err) {
+        del.disabled = false;
+        showToast(err.message || 'Could not delete that report');
+      });
+    });
+    card.appendChild(del);
+    return card;
+  }
+
+  function loadMyReports(userId) {
+    var list = document.getElementById('reportsList');
+    var empty = document.getElementById('reportsEmptyState');
+    var loading = document.getElementById('reportsLoading');
+    if (!list) return;
+
+    KisaStore.sightings.listMine(userId).then(function (rows) {
+      if (loading) loading.hidden = true;
+      list.innerHTML = '';
+      if (!rows.length) {
+        list.hidden = true;
+        if (empty) empty.hidden = false;
+        return;
+      }
+      if (empty) empty.hidden = true;
+      list.hidden = false;
+      rows.forEach(function (row) { list.appendChild(reportCard(row)); });
+    }).catch(function (err) {
+      if (loading) { loading.hidden = false; loading.textContent = err.message || 'Could not load your reports.'; }
+    });
+  }
+
+  /* ---- Settings ---- */
+  var VISIBILITY = ['public', 'community', 'private'];
+
+  function fillSettings(profile) {
+    if (!profile) return;
+    function setBox(id, value) {
+      var el = document.getElementById(id);
+      if (el && typeof value === 'boolean') el.checked = value;
+    }
+    setBox('notifNearby',  profile.notif_nearby);
+    setBox('notifReplies', profile.notif_replies);
+    setBox('notifRescue',  profile.notif_rescue);
+    setBox('notifNews',    profile.notif_news);
+    setBox('showLocation', profile.show_location);
+    /* Checked against the known list before it goes near a selector. */
+    if (VISIBILITY.indexOf(profile.visibility) !== -1) {
+      var radio = document.querySelector('input[name="visibility"][value="' + profile.visibility + '"]');
+      if (radio) radio.checked = true;
+    }
+  }
+
+  /* ---- Profile photo ---- */
+  var kisaAvatarPath = null;
+
+  function dataUrlToFile(dataUrl) {
+    /* Built by hand rather than fetch(dataUrl): connect-src does not allow
+       data: URLs, so fetch would be blocked by the page's own policy. */
+    var m = /^data:(image\/(png|jpeg|gif|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
+    if (!m) return null;
+    var bin = atob(m[3]);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var ext = m[2] === 'jpeg' ? 'jpg' : m[2];
+    return new File([bytes], 'avatar.' + ext, { type: m[1] });
+  }
+
+  function loadAvatar(profile) {
+    var path = profile && profile.avatar_url;
+    if (path) {
+      kisaAvatarPath = path;
+      KisaStore.profiles.avatarUrl(path).then(function (url) {
+        if (url) applyAvatarEverywhere(url);
+      });
+      try { localStorage.removeItem(AVATAR_KEY); } catch (e) {}
+      return;
+    }
+    /* One-time move for photos set before this change, which lived only in
+       this browser. Upload it so it follows the account from now on. */
+    var legacy = loadStoredAvatar();
+    var file = isImageDataUrl(legacy) ? dataUrlToFile(legacy) : null;
+    if (!file || !kisaUser) return;
+    applyAvatarEverywhere(legacy);
+    KisaStore.profiles.uploadAvatar(kisaUser.id, file)
+      .then(function (p) {
+        kisaAvatarPath = p;
+        return KisaStore.profiles.update(kisaUser.id, { avatar_url: p });
+      })
+      .then(function () {
+        try { localStorage.removeItem(AVATAR_KEY); } catch (e) {}
+      })
+      .catch(function () { /* keep the local copy; they can upload again */ });
+  }
+
+  /* ---- Load the signed-in account ----
+     Everything above was written against placeholder markup. These fill it
+     from the real user and their profiles row. */
+  var kisaUser = null;
+  var kisaProfileExtras = false;   /* whether profiles has bio and location */
+
+  function fillEmail(user) {
+    ['email', 'settingsEmail'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.value = user.email || '';
+      var wrap = el.closest('.input-icon-wrap');
+      var badge = wrap && wrap.querySelector('.verified-badge');
+      if (badge) {
+        /* Only claim Verified when it actually is. With email confirmation
+           switched off, Supabase stamps email_confirmed_at at signup even
+           though nobody clicked a link, so that field would show Verified
+           for every account. identity_data.email_verified is the honest
+           signal and only turns true after a real confirmation. */
+        var ident = (user.identities || [])[0];
+        var verified = !!(ident && ident.identity_data && ident.identity_data.email_verified);
+        badge.hidden = !verified;
+        el.classList.toggle('has-badge', verified);
+      }
+    });
+  }
+
+  function loadAccount() {
+    if (!window.KisaStore) return;
+    KisaStore.auth.getUser().then(function (user) {
+      if (!user) return;           /* kisa-auth-ui.js handles the redirect */
+      kisaUser = user;
+      fillEmail(user);
+      return KisaStore.profiles.get(user.id).then(function (profile) {
+        var meta = user.user_metadata || {};
+        var name = (profile && profile.display_name) || meta.full_name || '';
+        if (fullNameInput) fullNameInput.value = name;
+
+        var phoneEl = document.getElementById('phone');
+        if (phoneEl && profile && profile.phone) phoneEl.value = profile.phone;
+
+        if (profile && Object.prototype.hasOwnProperty.call(profile, 'bio')) {
+          kisaProfileExtras = true;
+          if (bioInput && profile.bio) {
+            bioInput.value = profile.bio;
+            if (bioCount) bioCount.textContent = String(profile.bio.length);
+          }
+          var locEl = document.getElementById('location');
+          if (locEl && profile.location) locEl.value = profile.location;
+        }
+        syncNameDisplay();
+        loadAvatar(profile);
+        fillSettings(profile);
+        loadMyReports(user.id);
+      });
+    }).catch(function () { /* signed out: the auth guard takes over */ });
+  }
+
   syncNameDisplay();
+  loadAccount();
 
   /* Tab state routing updates */
   var sidebarLinks = document.querySelectorAll('.sidebar-link[data-tab]');
@@ -1588,22 +1959,143 @@
     });
   });
 
-  /* Stubs events controls */
+  /* Settings controls */
   var saveSecurityBtn = document.getElementById('saveSecurityBtn');
   var saveNotifBtn = document.getElementById('saveNotifBtn');
   var savePrivacyBtn = document.getElementById('savePrivacyBtn');
   var exportDataBtn = document.getElementById('exportDataBtn');
   var deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
-  if (saveSecurityBtn) saveSecurityBtn.addEventListener('click', function () { showToast('Security settings saved'); });
-  if (saveNotifBtn)    saveNotifBtn.addEventListener('click', function () { showToast('Notification preferences saved'); });
-  if (savePrivacyBtn)  savePrivacyBtn.addEventListener('click', function () { showToast('Privacy settings saved'); });
-  if (exportDataBtn)   exportDataBtn.addEventListener('click', function () { showToast('Data export requested. Check your email shortly.'); });
+  /* Supabase's updateUser does not ask for the old password, so we check it
+     ourselves by signing in with it first. Without that, anyone borrowing an
+     unlocked laptop could change the password. */
+  if (saveSecurityBtn) saveSecurityBtn.addEventListener('click', function () {
+    var cur = document.getElementById('currentPassword');
+    var next = document.getElementById('newPassword');
+    var conf = document.getElementById('confirmPassword');
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    if (!cur.value) { showToast('Enter your current password'); cur.focus(); return; }
+    if (!next.value || next.value.length < 8) {
+      showToast('New password must be at least 8 characters'); next.focus(); return;
+    }
+    if (next.value !== conf.value) { showToast('New passwords do not match'); conf.focus(); return; }
+    if (next.value === cur.value) { showToast('That is already your password'); next.focus(); return; }
+
+    var label = saveSecurityBtn.textContent;
+    var restore = function () { saveSecurityBtn.disabled = false; saveSecurityBtn.textContent = label; };
+    saveSecurityBtn.disabled = true;
+    saveSecurityBtn.textContent = 'Updating...';
+
+    KisaStore.auth.signIn(kisaUser.email, cur.value)
+      .catch(function () { throw new Error('Your current password is not correct'); })
+      .then(function () { return KisaStore.client().auth.updateUser({ password: next.value }); })
+      .then(function (r) {
+        if (r.error) throw new Error(r.error.message);
+        restore();
+        cur.value = ''; next.value = ''; conf.value = '';
+        showToast('Password updated');
+      })
+      .catch(function (err) { restore(); showToast(err.message || 'Could not update password'); });
+  });
+
+  /* Notification and privacy settings, stored on the profile. The privacy
+     choices are enforced by the database itself, through the policies in
+     backend/migrations/005_contact_avatar_settings.sql, not just remembered here. */
+  function checkedById(id) {
+    var el = document.getElementById(id);
+    return !!(el && el.checked);
+  }
+
+  function saveSettings(btn, fields, doneMsg) {
+    if (!btn) return;
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    KisaStore.profiles.update(kisaUser.id, fields)
+      .then(function (row) {
+        /* If the columns do not exist yet, the row comes back without them. */
+        var missing = Object.keys(fields).some(function (k) {
+          return !row || !Object.prototype.hasOwnProperty.call(row, k);
+        });
+        if (missing) throw new Error('setup');
+        showToast(doneMsg);
+      })
+      .catch(function (err) {
+        var msg = (err && err.message) || '';
+        showToast(/setup|column|schema cache/i.test(msg)
+          ? 'Settings need one more setup step: run backend/migrations/005_contact_avatar_settings.sql in Supabase.'
+          : (msg || 'Could not save your settings'));
+      })
+      .then(function () {
+        btn.disabled = false;
+        btn.textContent = label;
+      });
+  }
+
+  if (saveNotifBtn) saveNotifBtn.addEventListener('click', function () {
+    saveSettings(saveNotifBtn, {
+      notif_nearby:  checkedById('notifNearby'),
+      notif_replies: checkedById('notifReplies'),
+      notif_rescue:  checkedById('notifRescue'),
+      notif_news:    checkedById('notifNews')
+    }, 'Notification preferences saved');
+  });
+
+  if (savePrivacyBtn) savePrivacyBtn.addEventListener('click', function () {
+    var vis = document.querySelector('input[name="visibility"]:checked');
+    saveSettings(savePrivacyBtn, {
+      visibility: vis ? vis.value : 'public',
+      show_location: checkedById('showLocation')
+    }, 'Privacy settings saved');
+  });
+
+  /* Export what we actually hold, straight from the browser. */
+  if (exportDataBtn) exportDataBtn.addEventListener('click', function () {
+    if (!kisaUser) { showToast('Please sign in first'); return; }
+    exportDataBtn.disabled = true;
+    Promise.all([
+      KisaStore.profiles.get(kisaUser.id),
+      KisaStore.sightings.listMine(kisaUser.id)
+    ]).then(function (res) {
+      var blob = new Blob([JSON.stringify({
+        exported_at: new Date().toISOString(),
+        account: { id: kisaUser.id, email: kisaUser.email, created_at: kisaUser.created_at },
+        profile: res[0], sightings: res[1]
+      }, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'kisa-my-data.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      exportDataBtn.disabled = false;
+      showToast('Your data has been downloaded');
+    }).catch(function (err) {
+      exportDataBtn.disabled = false;
+      showToast(err.message || 'Could not export your data');
+    });
+  });
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', function () {
-      if (window.confirm('Are you sure? This permanently deletes your account and all your data. This cannot be undone.')) {
-        showToast('Account deletion requested');
+      if (!window.confirm('Are you sure? This permanently deletes your account, ' +
+                          'your sightings, posts and comments. This cannot be undone.')) return;
+      /* Second confirmation: this is irreversible and the first dialog is easy
+         to click through. */
+      if (window.prompt('Type DELETE to confirm.') !== 'DELETE') {
+        showToast('Account deletion cancelled');
+        return;
       }
+      deleteAccountBtn.disabled = true;
+      var original = deleteAccountBtn.textContent;
+      deleteAccountBtn.textContent = 'Deleting...';
+      KisaStore.auth.deleteAccount()
+        .then(function () { window.location.href = 'index.html'; })
+        .catch(function (err) {
+          deleteAccountBtn.disabled = false;
+          deleteAccountBtn.textContent = original;
+          window.alert(err.message);
+        });
     });
   }
 
@@ -1632,15 +2124,6 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   })();
 
-  /* Terminate layout session routing definitions */
-  ['logoutLink', 'logoutLinkMobile', 'logoutSidebar'].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.href = 'index.html';
-    });
-  });
 
   /* Sidebar configuration drawer toggling execution sequence */
   (function () {
@@ -1724,229 +2207,7 @@
 </script>
 
 <!-- ══ COOKIES/LEGAL POPUP INTERACTIVE HANDLERS MODAL MODULE ENGINE ══ -->
-<script>
-(function () {
-  var CONTENT = {
-    privacy: {
-      title: 'Privacy Policy',
-      html: `
-        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
-        <h3>Who We Are</h3>
-        <p>Kisa is a community platform for tracking, reporting, and supporting stray and community cats. We are committed to protecting your personal information and being transparent about how we use it.</p>
-        <h3>Information We Collect</h3>
-        <p>When you use Kisa, we may collect the following information:</p>
-        <ul>
-          <li>Account information you provide when registering (name, email address, profile photo)</li>
-          <li>Sighting reports including location data, photos, and cat condition details you choose to submit</li>
-          <li>Usage data such as pages visited, features used, and time spent on the platform</li>
-          <li>Device information including browser type, operating system, and IP address</li>
-          <li>Communications you send to us or post within the platform</li>
-        </ul>
-        <h3>How We Use Your Information</h3>
-        <p>We use the information we collect to:</p>
-        <ul>
-          <li>Operate and improve the Kisa platform and its features</li>
-          <li>Display cat sightings on the live map and community feed</li>
-          <li>Send notifications about sightings, rescues, or updates you have opted into</li>
-          <li>Maintain platform safety and prevent misuse</li>
-          <li>Respond to your support requests and enquiries</li>
-          <li>Comply with our legal obligations</li>
-        </ul>
-        <h3>Location Data</h3>
-        <p>If you choose to report a sighting using your live location, we collect the geographic coordinates you submit. You may also enter a location manually. We do not track your location continuously or in the background. Location data attached to sighting reports is visible to other platform users as part of the community map.</p>
-        <h3>Photos and Uploads</h3>
-        <p>Photos you upload are stored on our servers and may be visible to other users as part of sighting reports and cat profiles. We do not sell or license your uploaded content to third parties. You retain ownership of photos you upload and grant Kisa a non-exclusive licence to display them within the platform.</p>
-        <h3>Data Sharing</h3>
-        <p>We do not sell your personal data. We may share data with:</p>
-        <ul>
-          <li>Service providers who help us operate the platform (such as cloud hosting and analytics), under strict data processing agreements</li>
-          <li>Law enforcement or regulatory bodies where required by law</li>
-          <li>Other users, only for content you have chosen to make public (such as sighting reports and comments)</li>
-        </ul>
-        <h3>Data Retention</h3>
-        <p>We retain your account data for as long as your account is active. If you delete your account, we will remove your personal information within 30 days, except where we are required by law to retain it. Sighting reports you have submitted may remain on the platform in anonymised form to preserve community cat history.</p>
-        <h3>Your Rights</h3>
-        <p>Depending on where you live, you may have the right to access, correct, or delete the personal data we hold about you. You may also have the right to object to certain processing or to request a copy of your data in a portable format. To exercise any of these rights, contact us at privacy@kisa.app.</p>
-        <h3>Cookies</h3>
-        <p>Kisa uses essential cookies to keep you signed in and maintain your session. We may also use analytics cookies to understand how the platform is used and improve it. You can control cookie preferences through your browser settings. Disabling essential cookies may affect platform functionality.</p>
-        <h3>Security</h3>
-        <p>We take reasonable technical and organisational measures to protect your data against unauthorised access, loss, or disclosure. However, no system is completely secure and we cannot guarantee absolute security.</p>
-        <h3>Children</h3>
-        <p>Kisa is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us and we will delete it.</p>
-        <h3>Changes to This Policy</h3>
-        <p>We may update this Privacy Policy from time to time. We will notify registered users of significant changes by email or via an in-platform notice. Continued use of Kisa after changes are posted constitutes acceptance of the updated policy.</p>
-        <h3>Contact Us</h3>
-        <p>For any privacy-related questions or requests, please contact us at privacy@kisa.app.</p>
-      `
-    },
-    terms: {
-      title: 'Terms of Service',
-      html: `
-        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
-        <h3>Acceptance of Terms</h3>
-        <p>By accessing or using Kisa, you agree to be bound by these Terms of Service. If you do not agree, please do not use the platform. We may update these terms from time to time and will notify you of material changes.</p>
-        <h3>The Kisa Platform</h3>
-        <p>Kisa is a community tool designed to help people report, track, and support stray and community cats in their neighbourhood. The platform allows users to submit sighting reports, view a live map of cat activity, and interact with others in the community feed.</p>
-        <h3>Eligibility</h3>
-        <p>You must be at least 13 years old to use Kisa. By using the platform you confirm that you meet this requirement. If you are under 18, you should use the platform with the knowledge and permission of a parent or guardian.</p>
-        <h3>Your Account</h3>
-        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You must not share your account with others or use another person's account without their permission. Notify us immediately at support@kisa.app if you suspect unauthorised access to your account.</p>
-        <h3>Acceptable Use</h3>
-        <p>When using Kisa, you agree not to:</p>
-        <ul>
-          <li>Submit false, misleading, or fabricated sighting reports</li>
-          <li>Upload content that is offensive, abusive, or violates any person's rights</li>
-          <li>Use the platform to harass, threaten, or intimidate any individual</li>
-          <li>Attempt to access, scrape, or extract data from the platform in an unauthorised manner</li>
-          <li>Use the platform for any commercial purpose without our prior written consent</li>
-          <li>Upload content that infringes third-party intellectual property rights</li>
-          <li>Attempt to compromise the security or integrity of the platform</li>
-        </ul>
-        <h3>User Content</h3>
-        <p>You retain ownership of content you submit to Kisa, including photos, sighting descriptions, and comments. By submitting content, you grant Kisa a non-exclusive, royalty-free, worldwide licence to display, reproduce, and distribute your content within the platform for the purposes of operating the service.</p>
-        <p>You are solely responsible for the content you post. Kisa does not verify the accuracy of user-submitted sighting reports and cannot be held responsible for actions taken based on community information.</p>
-        <h3>Animal Welfare</h3>
-        <p>Kisa is committed to the welfare of cats. Users must not use the platform to facilitate any harm to animals. Reports of animal cruelty should be directed to the appropriate local authority or animal welfare organisation. We reserve the right to remove content and ban users who we believe are misusing the platform to harm animals.</p>
-        <h3>Moderation</h3>
-        <p>We reserve the right to remove any content that violates these terms or that we determine, in our sole discretion, to be harmful, false, or inappropriate. We may suspend or terminate accounts that repeatedly violate these terms or that we believe pose a risk to the community.</p>
-        <h3>Intellectual Property</h3>
-        <p>All Kisa branding, design, software, and original content is owned by Kisa and protected by applicable intellectual property laws. You may not copy, reproduce, or create derivative works from Kisa's proprietary content without our express written permission.</p>
-        <h3>Disclaimer of Warranties</h3>
-        <p>Kisa is provided on an "as is" and "as available" basis. We make no warranties, express or implied, regarding the accuracy, reliability, or availability of the platform. We do not guarantee that sighting reports are accurate or that the platform will be free from errors or interruptions.</p>
-        <h3>Limitation of Liability</h3>
-        <p>To the fullest extent permitted by law, Kisa shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of or inability to use the platform, including any damages resulting from reliance on community-submitted information.</p>
-        <h3>Termination</h3>
-        <p>You may delete your account at any time through the platform settings. We may suspend or terminate your access at any time if we believe you have violated these terms, with or without notice.</p>
-        <h3>Governing Law</h3>
-        <p>These terms shall be governed by and construed in accordance with applicable law. Any disputes shall be subject to the exclusive jurisdiction of the courts in the relevant territory.</p>
-        <h3>Contact Us</h3>
-        <p>For questions about these terms, please contact us at support@kisa.app.</p>
-      `
-    },
-    faq: {
-      title: 'Frequently Asked Questions',
-      html: `
-        <p style="color:var(--text-2);margin-bottom:24px;">Got a question about Kisa? Find answers to the most common ones below.</p>
-        <div id="kisaFaqAccordion"></div>
-      `,
-      faqs: [
-        { q: 'What is Kisa?', a: 'Kisa is a community platform for tracking and supporting stray and community cats in your neighbourhood. Anyone can report a sighting, and the community works together to monitor, feed, and rescue cats that need help.' },
-        { q: 'Is Kisa free to use?', a: 'Yes, Kisa is completely free for all community members. Create an account and start reporting sightings straight away.' },
-        { q: 'How do I report a cat sighting?', a: 'Once you are signed in, click "Report a Sighting" in the navigation bar. Fill in the details including a photo, location, and the cat\'s condition, then submit. Your report will appear on the live map and in the community feed.' },
-        { q: 'Do I need an account to browse the map?', a: 'You can view the live map and browse cat profiles without an account. However, you need to be signed in to submit reports, like posts, or leave comments.' },
-        { q: 'What does SOS mean?', a: 'SOS indicates a cat that needs urgent veterinary attention or rescue. If you spot a cat in an SOS condition, please also contact your local animal welfare organisation or a vet as soon as possible.' },
-        { q: 'Can I report a cat as adopted or taken in?', a: 'Yes. On any community post, you can use the "I\'ve taken them in" option to update the community that the cat is safe. This helps prevent duplicate rescue attempts and keeps the community informed.' },
-        { q: 'How is my location data used?', a: 'Your location is only collected when you submit a sighting report, and only the location you provide is stored. We do not track your location in the background. See our Privacy Policy for full details.' },
-        { q: 'How do I delete my account?', a: 'You can delete your account from the Settings page. This will remove your personal information within 30 days. Some sighting reports may remain in anonymised form to preserve community cat history.' },
-        { q: 'How do I report inappropriate content?', a: 'Use the report option on any post or comment. Our moderation team reviews reports and takes action in line with our Terms of Service.' },
-        { q: 'How can I get in touch with the Kisa team?', a: 'You can reach us at support@kisa.app. We aim to respond within 2 business days.' }
-      ]
-    },
-    cookies: {
-      title: 'Cookie Policy',
-      html: `
-        <p class="kisa-modal-updated">Last updated: 1 July 2026</p>
-        <h3>What Are Cookies</h3>
-        <p>Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit, such as your login status and preferences.</p>
-        <h3>Cookies We Use</h3>
-        <p>Kisa uses a minimal set of cookies:</p>
-        <ul>
-          <li><strong>Essential cookies</strong> - Required for the platform to function. These include your session cookie that keeps you signed in. You cannot opt out of essential cookies without affecting platform functionality.</li>
-          <li><strong>Analytics cookies</strong> - Help us understand how the platform is used so we can improve it. These collect anonymised usage data such as pages visited and features used.</li>
-          <li><strong>Preference cookies</strong> - Remember your settings and preferences, such as display mode.</li>
-        </ul>
-        <h3>Managing Cookies</h3>
-        <p>You can control and delete cookies through your browser settings. Please note that disabling essential cookies will affect your ability to use Kisa, including staying signed in. For instructions on managing cookies in your browser, refer to your browser's help documentation.</p>
-        <h3>Third-Party Cookies</h3>
-        <p>We use a small number of trusted third-party services to help operate Kisa, such as analytics providers. These services may set their own cookies. We do not allow third-party advertising cookies on Kisa.</p>
-        <h3>Changes</h3>
-        <p>We may update this Cookie Policy as the platform evolves. Any significant changes will be communicated through an in-platform notice.</p>
-        <h3>Contact</h3>
-        <p>For questions about our use of cookies, contact us at privacy@kisa.app.</p>
-      `
-    }
-  };
 
-  function buildFaqHtml(faqs) {
-    return faqs.map(function(item, i) {
-      return '<div class="kisa-modal-faq-item" data-faq="' + i + '">' +
-        '<button class="kisa-modal-faq-q" type="button">' +
-          item.q +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>' +
-        '</button>' +
-        '<div class="kisa-modal-faq-a">' + item.a + '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  function openModal(type) {
-    var data = CONTENT[type];
-    if (!data) return;
-    var modal    = document.getElementById('kisaModal');
-    var backdrop = document.getElementById('kisaModalBackdrop');
-    var title    = document.getElementById('kisaModalTitle');
-    var body     = document.getElementById('kisaModalBody');
-    title.textContent = data.title;
-    body.innerHTML    = data.html;
-    if (type === 'faq' && data.faqs) {
-      var acc = document.getElementById('kisaFaqAccordion');
-      if (acc) {
-        acc.innerHTML = buildFaqHtml(data.faqs);
-        acc.addEventListener('click', function(e) {
-          var btn = e.target.closest('.kisa-modal-faq-q');
-          if (!btn) return;
-          var item = btn.closest('.kisa-modal-faq-item');
-          var wasOpen = item.classList.contains('open');
-          acc.querySelectorAll('.kisa-modal-faq-item').forEach(function(el) { el.classList.remove('open'); });
-          if (!wasOpen) item.classList.add('open');
-        });
-      }
-    }
-    modal.style.display = 'flex';
-    backdrop.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        modal.classList.add('open');
-        backdrop.classList.add('open');
-      });
-    });
-    body.scrollTop = 0;
-  }
-
-  function closeModal() {
-    var modal    = document.getElementById('kisaModal');
-    var backdrop = document.getElementById('kisaModalBackdrop');
-    if(!modal) return;
-    modal.classList.remove('open');
-    backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-    setTimeout(function() {
-      modal.style.display = 'none';
-      backdrop.style.display = 'none';
-    }, 250);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('a[href="/privacy"], a[href="/terms"], a[href="/faq"], a[href="/cookies"]').forEach(function(el) {
-      el.addEventListener('click', function(e) {
-        e.preventDefault();
-        var map = { '/privacy': 'privacy', '/terms': 'terms', '/faq': 'faq', '/cookies': 'cookies' };
-        openModal(map[el.getAttribute('href')]);
-      });
-    });
-
-    document.getElementById('kisaModalClose').addEventListener('click', closeModal);
-    document.getElementById('kisaModalBackdrop').addEventListener('click', closeModal);
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeModal();
-    });
-  });
-
-  window.kisaOpenModal = openModal;
-})();
-</script>
+<script src="assets/js/kisa-modal.js?v=2026-09-14b" defer></script>
 </body>
 </html>
-
-

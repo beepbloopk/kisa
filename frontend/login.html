@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="color-scheme" content="light dark">
-  <title>Log In — Kisa</title>
+  <title>Log In - Kisa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -118,8 +119,7 @@
       position: absolute;
       width: 38px; height: 38px;
       color: #C8D9E6;
-      opacity: 0;
-      animation: pawStep 7s ease-in-out infinite;
+      opacity: 0.52;
     }
     /* Alternating left-right walking pattern, bottom → top */
     .pw1 { bottom: 10%; left: 24%; --r: -16deg; animation-delay: 0s;    }
@@ -128,13 +128,6 @@
     .pw4 { bottom: 50%; left: 57%; --r:  17deg; animation-delay: 2.25s; }
     .pw5 { bottom: 63%; left: 20%; --r: -15deg; animation-delay: 3s;    }
     .pw6 { bottom: 76%; left: 54%; --r:  13deg; animation-delay: 3.75s; }
-    @keyframes pawStep {
-      0%   { opacity: 0;    transform: rotate(var(--r)) scale(0.65); }
-      8%   { opacity: 0.52; transform: rotate(var(--r)) scale(1);    }
-      40%  { opacity: 0.52; transform: rotate(var(--r)) scale(1);    }
-      55%  { opacity: 0;    transform: rotate(var(--r)) scale(0.90); }
-      100% { opacity: 0;    transform: rotate(var(--r)) scale(0.65); }
-    }
 
     /* Visual tagline */
     .visual-tagline {
@@ -362,6 +355,12 @@
 
     /* ── PAW CURSOR TRAIL ── (injected via JS) */
   </style>
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14b">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14b" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14b" defer></script>
 </head>
 <body>
 
@@ -405,7 +404,7 @@
         </div>
       </div>
 
-      <!-- Tagline — no fake data -->
+      <!-- Tagline, no fake data -->
       <div class="visual-tagline">
         <h2>Our community,<br>our cats, always<br>connected with love.</h2>
         <p>Join neighbours tracking and caring for local strays together.</p>
@@ -418,11 +417,11 @@
     <div class="auth-panel">
 
       <div class="auth-panel-top">
-        <a href="/" class="auth-logo" aria-label="Kisa home">
+        <a href="index.html" class="auth-logo" aria-label="Kisa home">
           <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
           <span class="auth-logo-name">Kisa</span>
         </a>
-        <a href="/" class="auth-back">
+        <a href="index.html" class="auth-back">
           <i data-lucide="arrow-left" style="width:14px;height:14px;"></i>
           Back to home
         </a>
@@ -433,7 +432,7 @@
         <h1 class="auth-heading">Log in to Kisa</h1>
         <p class="auth-subtext">Your community and cats are waiting for you.</p>
 
-        <form id="loginForm" method="POST" action="/auth/login" autocomplete="on" >
+        <form id="loginForm" novalidate autocomplete="on">
 
           <div class="form-group">
             <label class="form-label" for="email">Email address</label>
@@ -477,7 +476,7 @@
 
         <div class="divider">or continue with</div>
 
-        <!-- Google OAuth stub — ready for Firebase -->
+        <!-- Google OAuth -->
         <button class="btn-social" id="googleBtn" type="button" aria-label="Continue with Google">
           <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -489,7 +488,7 @@
         </button>
 
         <div class="auth-switch">
-          Don't have an account? <a href="/signup">Sign up for free</a>
+          Don't have an account? <a href="signup.html">Sign up for free</a>
         </div>
 
       </div>
@@ -550,16 +549,27 @@ document.addEventListener('DOMContentLoaded', function () {
     if (this.value) clearError('password', 'passwordErr');
   });
 
-  /* ── Forgot password stub ── */
+  /* ── Forgot password ── */
   document.getElementById('forgotLink').addEventListener('click', function (e) {
-    
-    showToast('Password reset coming soon.');
-    // TODO: Firebase — firebase.auth().sendPasswordResetEmail(email)
+    e.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('email', 'emailErr', 'Enter your email address first, then click this.');
+      return;
+    }
+    clearError('email', 'emailErr');
+    KisaStore.auth.sendPasswordReset(email, location.origin + '/login.html')
+      .then(function () {
+        /* Deliberately the same message whether or not the account exists -
+           otherwise this becomes a way to test which emails are registered. */
+        showToast('If that email has an account, a reset link is on its way.');
+      })
+      .catch(function (err) { showToast(err.message); });
   });
 
   /* ── Form submit ── */
   document.getElementById('loginForm').addEventListener('submit', function (e) {
-    
+    e.preventDefault();
     var valid = true;
 
     var email    = document.getElementById('email').value.trim();
@@ -579,41 +589,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!valid) return;
 
-    /* ── TODO: Firebase Email Auth ────────────────────────────────
-       import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-       const auth = getAuth();
-       signInWithEmailAndPassword(auth, email, password)
-         .then(cred => { window.location.href = '/dashboard'; })
-         .catch(err => {
-           if (err.code === 'auth/user-not-found') setError('email', 'emailErr', 'No account with that email.');
-           if (err.code === 'auth/wrong-password')  setError('password', 'passwordErr', 'Incorrect password.');
-         });
-    ─────────────────────────────────────────────────────────────── */
     var btn = document.getElementById('loginBtn');
-    btn.disabled = true;
-    btn.textContent = 'Logging in…';
-    setTimeout(function () {
+    var reset = function () {
       btn.disabled = false;
       btn.innerHTML = '<i data-lucide="log-in" style="width:16px;height:16px;"></i> Log in';
-      lucide.createIcons();
-      showToast('Firebase not yet connected.');
-    }, 1200);
+      if (window.lucide) lucide.createIcons();
+    };
+    btn.disabled = true;
+    btn.textContent = 'Logging in…';
+
+    /* Decide where the session is stored before signing in, so the very
+       first write lands in the right place. */
+    var remember = document.getElementById('rememberMe');
+    KisaStore.auth.setRemember(!remember || remember.checked);
+
+    KisaStore.auth.signIn(email, password)
+      .then(function () {
+        btn.textContent = 'Welcome back!';
+        /* ?next= lets a protected page send you here and get you back. */
+        var next = new URLSearchParams(location.search).get('next');
+        location.href = (next && /^[\w.-]+\.html$/.test(next)) ? next : 'dashboard.html';
+      })
+      .catch(function (err) {
+        reset();
+        /* Supabase deliberately does not say which half was wrong, so show
+           it under the password field and leave the email as typed. */
+        setError('password', 'passwordErr', err.message);
+      });
   });
 
-  /* ── Google OAuth stub ── */
+  /* ── Google OAuth ── */
   document.getElementById('googleBtn').addEventListener('click', function () {
-    showToast('Google sign-in coming soon.');
-    /* TODO: Firebase Google Auth ──────────────────────────────────
-       import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-       const provider = new GoogleAuthProvider();
-       signInWithPopup(getAuth(), provider)
-         .then(result => { window.location.href = '/dashboard'; })
-         .catch(console.error);
-    ─────────────────────────────────────────────────────────────── */
+    /* Enable the Google provider in Supabase (Authentication -> Providers)
+       and this works; until then say so plainly rather than hanging. */
+    KisaStore.client().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: location.origin + '/dashboard.html' }
+    }).then(function (r) {
+      if (r.error) showToast('Google sign-in isn’t set up yet. Use your email and password.');
+    });
   });
 
   /* ── Paw cursor trail ── */
   (function () {
+    /* No cursor to trail on a touch screen, and unwanted if the visitor
+       has asked for reduced motion. */
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var lastX = 0, lastY = 0;
     var distanceThreshold = 110;
     var style = document.createElement('style');

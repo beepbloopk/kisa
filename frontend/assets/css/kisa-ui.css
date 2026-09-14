@@ -1,0 +1,492 @@
+/* Kisa: shared UI polish layer.
+   Loaded last in <head> on every page so it wins ties against the inline
+   page styles. Everything here is additive: it changes accessibility and
+   touch behaviour, not the visual design. */
+
+/* ─────────────────────────────────────────────────────────────
+   1. Motion
+   The site has a paw-print cursor trail, slide-in entrance animations
+   and a carousel that auto-advances every 4.5s. For anyone who has asked
+   their OS for reduced motion, all of that is unwelcome, and for some
+   people, actively nauseating. Honour the request.
+   The paw trail is hidden here; carousel autoplay is stopped in the
+   per-page slider script, which CSS cannot reach.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The entrance animations start at opacity 0 and fade in. Collapsing the
+     duration alone would be enough, but be explicit so nothing can be left
+     invisible if an animation is interrupted. */
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scale-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .paw-trail { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. Horizontal overflow
+   .animate-slide-in-right starts at translateX(40px), which pushes the
+   hero callout past the right edge while it plays. On a phone that makes
+   the whole page swipe sideways for the first 600ms. Clip it.
+   ───────────────────────────────────────────────────────────── */
+/* `clip`, not `hidden`. `overflow-x: hidden` makes the element a scroll
+   container, which silently breaks `position: sticky` on every descendant -
+   it took the sticky nav with it. `clip` does the same clipping without
+   creating a scroll container. Browsers too old for it (Safari < 16) just
+   fall back to the harmless original behaviour. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. Focus
+   Text inputs already have a focus ring, but buttons and links had none
+   of their own and fell back to the browser default, a white outline
+   that all but vanishes on the light theme. One consistent ring instead.
+   :focus-visible means mouse users never see it; keyboard users always do.
+   ───────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent-2, #567C8D);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A few controls set `outline: none` on :focus and so lost their ring
+   entirely. Put it back for keyboard users. */
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible,
+.form-input:focus-visible,
+.form-textarea:focus-visible,
+.form-select:focus-visible,
+.comment-input:focus-visible,
+.modal-textarea:focus-visible {
+  outline: 2px solid var(--accent-2, #567C8D);
+  outline-offset: 1px;
+}
+
+/* Skip-to-content target, if a page grows one. Hidden until focused. */
+.kisa-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 10px 18px;
+  background: var(--surface, #fff);
+  color: var(--text, #2F4156);
+  border: 1px solid var(--border, rgba(47,65,86,0.11));
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+}
+.kisa-skip-link:focus {
+  left: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. Touch targets
+   For small icon controls the visual size is deliberately left alone -
+   an invisible ::after pad extends only the *tappable* area out to 44px.
+   That is the WCAG 2.5.5 / iOS HIG minimum. Measured before: carousel
+   dots 7px, checkboxes 14px, password toggle 24px, post menu 32px,
+   social buttons 34px.
+   ───────────────────────────────────────────────────────────── */
+/* Gate on a narrow viewport OR a touch pointer. `pointer: coarse` alone
+   misses touchscreen laptops, which report a fine primary pointer but are
+   still tapped with fingers; a width query alone misses a large tablet. */
+@media (max-width: 900px), (pointer: coarse) {
+  .sdot,
+  .slider-btn,
+  .pw-toggle,
+  .post-options,
+  .social-btn,
+  .comment-send-btn,
+  .kisa-modal-close {
+    position: relative;
+  }
+
+  .sdot::after,
+  .slider-btn::after,
+  .pw-toggle::after,
+  .post-options::after,
+  .social-btn::after,
+  .comment-send-btn::after,
+  .kisa-modal-close::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    /* purely a hit area, never paints, never blocks the icon */
+    background: transparent;
+  }
+
+  /* Carousel controls sit in a tight row; without more gap the padded hit
+     areas would overlap and steal taps from their neighbour. */
+  .slider-btns {
+    display: flex;
+    gap: 14px;
+  }
+
+  /* The dots are only 7px wide (22px when active), so even at a wider gap a
+     full 44px pad would cross into the next dot. Keep the full 44px height
+     and narrow the pad to sit inside the centre-to-centre spacing. */
+  .slider-dots {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .sdot::after {
+    width: 28px;
+  }
+
+  /* Controls that carry a label can simply grow, they have room. */
+  .filter-chip,
+  .action-btn,
+  .btn-adopt,
+  .tab-link,
+  .sidebar-link {
+    min-height: 44px;
+  }
+
+  .hamburger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Checkboxes and radios render at 14–15px, which is a hard tap to land.
+     Scale the control itself; these are never dense enough for it to hurt
+     the layout. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  /* Give the label next to a checkbox a taller line box so the whole row
+     is comfortably tappable, not just the box itself. */
+  .remember-label,
+  .terms-label,
+  .checkbox-row,
+  .remember-row,
+  .terms-row {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. Legibility
+   A handful of meta labels sit at 10px, which is below what most people
+   can read comfortably on a phone. 11px is the floor here; badges keep
+   their compact look.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .sidebar-heading,
+  .panel-eyebrow,
+  .section-eyebrow {
+    font-size: 11px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. Images
+   Nothing on the page should be able to push the layout wider than the
+   viewport, including a photo that fails to load and falls back to its
+   intrinsic size.
+   ───────────────────────────────────────────────────────────── */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------------
+   7. Auth state in the navbar
+
+   The `hidden` attribute only works through the browser's default
+   `[hidden] { display: none }` rule, which ANY inline or class display
+   value outranks. Setting el.hidden = true on a flex container did
+   nothing, so the signed-out buttons stayed visible next to the
+   signed-in account menu. This makes hidden win everywhere.
+   --------------------------------------------------------------- */
+[hidden] {
+  display: none !important;
+}
+
+.kisa-auth-out {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kisa-account-name {
+  padding: 10px 14px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.kisa-mobile-who {
+  padding: 14px 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* ---------------------------------------------------------------
+   8. Account menu
+
+   index.html never had an account menu, so it carried none of this
+   styling. Once the navbar started injecting the menu for signed-in
+   visitors, the home page rendered it as a flat unstyled list of
+   links sitting in the navbar, permanently open. Shared here so
+   every page styles it the same way.
+   --------------------------------------------------------------- */
+.account-wrap { position: relative;}
+.account-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-10);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-2);
+      cursor: pointer;
+      transition: all 0.18s;}
+.account-btn.open {
+      background: var(--accent-20);
+      color: var(--text);}
+.account-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 210px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      box-shadow: var(--shadow-md);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+      z-index: 110;}
+.account-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);}
+.account-menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-body);
+      padding: 9px 10px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;}
+.account-menu a svg { width: 16px; height: 16px; color: var(--accent-2); flex-shrink: 0;}
+.account-menu a:hover { background: var(--accent-10); color: var(--text);}
+.account-menu-divider { height: 1px; background: var(--border); margin: 6px 4px;}
+
+/* ---------------------------------------------------------------
+   9. Map picker
+
+   Leaflet's default marker is a PNG served from unpkg, which img-src
+   does not allow. This is a CSS pin instead, so no image is fetched
+   and it matches the site palette.
+   --------------------------------------------------------------- */
+.kisa-map {
+  cursor: crosshair;
+  background: var(--accent-sky, #C8D9E6);
+}
+.kisa-map .leaflet-container {
+  font: inherit;
+}
+
+.kisa-pin {
+  position: relative;
+}
+.kisa-pin-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: var(--accent, #2F4156);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(47, 65, 86, 0.45);
+}
+
+/* Leaflet's own controls, toned down to match the design. */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* ---------------------------------------------------------------
+   10. Delete your own report, shown in the community feed
+   --------------------------------------------------------------- */
+.post-delete {
+  color: var(--text-3);
+  transition: background 0.15s, color 0.15s;
+}
+.post-delete:hover {
+  background: rgba(214, 69, 69, 0.12);
+  color: #c0504a;
+}
+.post-delete:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------------------------------------------------------------
+   11. Notification bell
+   --------------------------------------------------------------- */
+.kisa-notif-wrap { position: relative; }
+
+.kisa-notif-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--accent-10);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+.kisa-notif-btn:hover { background: var(--accent-20); color: var(--text); }
+.kisa-notif-btn.has-unread { color: var(--text); }
+
+/* A count, not a blinking dot. */
+.kisa-notif-count {
+  position: absolute; top: -3px; right: -3px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 99px;
+  background: #c0504a; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 17px;
+  text-align: center;
+  border: 2px solid var(--bg);
+}
+
+.kisa-notif-panel {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  width: 320px; max-height: 420px;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-md);
+  opacity: 0; visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+  z-index: 120;
+}
+.kisa-notif-panel.open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+.kisa-notif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.kisa-notif-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.kisa-notif-readall {
+  background: none; border: none; cursor: pointer;
+  font-size: 11px; font-weight: 600; color: var(--accent-2);
+}
+.kisa-notif-readall:hover { text-decoration: underline; }
+
+.kisa-notif-list { overflow-y: auto; padding: 6px; }
+.kisa-notif-empty {
+  padding: 24px 16px; text-align: center;
+  font-size: 12px; line-height: 1.6; color: var(--text-3);
+}
+.kisa-notif-item {
+  display: block; padding: 10px 12px;
+  border-radius: 10px; text-decoration: none;
+  transition: background 0.15s;
+}
+.kisa-notif-item:hover { background: var(--accent-10); }
+.kisa-notif-item.unread { background: rgba(86, 124, 141, 0.10); }
+.kisa-notif-text { font-size: 13px; color: var(--text); line-height: 1.45; }
+.kisa-notif-where {
+  font-size: 11px; color: var(--text-2); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kisa-notif-time { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+
+@media (max-width: 900px) {
+  .kisa-notif-panel { width: 280px; }
+}
+
+/* ---------------------------------------------------------------
+   12. Live map pins and popups
+   --------------------------------------------------------------- */
+.kisa-map-display { cursor: grab; }
+.kisa-map-display:active { cursor: grabbing; }
+
+/* Colour by condition. Static, nothing pulses. */
+.kisa-pin-sos .kisa-pin-dot        { background: #c0504a; }
+.kisa-pin-injured .kisa-pin-dot    { background: #d07a4a; }
+.kisa-pin-needs-care .kisa-pin-dot { background: #c79a3e; }
+.kisa-pin-healthy .kisa-pin-dot,
+.kisa-pin-safe .kisa-pin-dot       { background: var(--accent-2, #567C8D); }
+
+.kisa-popup { font-size: 13px; line-height: 1.5; }
+.kisa-popup-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  padding: 2px 8px; border-radius: 99px; margin-bottom: 6px;
+}
+.kisa-popup-badge.badge-sos        { background: rgba(192,80,74,0.16);  color: #b23b3b; }
+.kisa-popup-badge.badge-needs-care { background: rgba(199,154,62,0.18); color: #a97620; }
+.kisa-popup-badge.badge-safe       { background: rgba(86,124,141,0.18); color: #41697c; }
+.kisa-popup-where { font-weight: 700; color: #2F4156; margin-bottom: 4px; }
+.kisa-popup-note  { color: #46586b; margin-bottom: 5px; }
+.kisa-popup-meta,
+.kisa-popup-time  { font-size: 11px; color: #6b7c8c; }
+.kisa-popup-rescued {
+  margin-top: 6px; font-size: 11px; font-weight: 700; color: #3f8b66;
+}
+/* Leaflet popups paint on their own white card, so these keep their own
+   colours rather than inheriting the page theme. */
+.leaflet-popup-content { margin: 12px 14px; }
+
+/* Marks a cat as safely housed, in the community feed. */
+.taken-in-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 99px;
+  background: rgba(78, 158, 120, 0.16);
+  color: #3f8b66;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) { .taken-in-badge { color: #7fc7a2; } }

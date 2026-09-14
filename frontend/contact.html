@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://plus.unsplash.com; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co https://*.tile.openstreetmap.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Kisa — Contact Us</title>
+  <title>Kisa - Contact Us</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@
     }
 
     /* ════════════════════════════════════════════════════════════
-       PAGE-SPECIFIC STYLES — CONTACT US
+       PAGE-SPECIFIC STYLES, CONTACT US
        ════════════════════════════════════════════════════════════ */
 
     /* ─── PAGE HERO ─── */
@@ -574,6 +574,13 @@
     }
     .kisa-modal-faq-item.open .kisa-modal-faq-a { max-height: 400px; padding-bottom: 14px; }
   </style>
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14b">
+  <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14b" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14b" defer></script>
 </head>
 <body>
 
@@ -583,15 +590,15 @@
     <div class="paw-progress-fill" id="pawProgressFill"></div>
   </div>
   <div class="wrap nav-inner">
-    <a href="/" class="nav-logo" aria-label="Kisa home">
+    <a href="index.html" class="nav-logo" aria-label="Kisa home">
       <i data-lucide="paw-print" style="width:22px;height:22px;"></i>
       Kisa
     </a>
     <ul class="nav-links">
-      <li><a href="/livemap">Live Map</a></li>
-      <li><a href="/community">Cats</a></li>
-      <li><a href="/report">Report a Sighting</a></li>
-      <li><a href="/contact" class="active">Contact Us</a></li>
+      <li><a href="livemap.html">Live Map</a></li>
+      <li><a href="community.html">Cats</a></li>
+      <li><a href="report.html">Report a Sighting</a></li>
+      <li><a href="contact.html" class="active">Contact Us</a></li>
     </ul>
     <div class="nav-right">
       <div class="nav-divider" aria-hidden="true"></div>
@@ -622,12 +629,12 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
-  <a href="/livemap"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
-  <a href="/community"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
-  <a href="/report"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
-  <a href="/contact"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
+  <a href="livemap.html"><i data-lucide="map" style="width:18px;height:18px;"></i> Live Map</a>
+  <a href="community.html"><i data-lucide="search" style="width:18px;height:18px;"></i>Cats</a>
+  <a href="report.html"><i data-lucide="plus-circle" style="width:18px;height:18px;"></i> Report a Sighting</a>
+  <a href="contact.html"><i data-lucide="mail" style="width:18px;height:18px;"></i> Contact Us</a>
   <div class="mob-divider"></div>
-  <a href="/profile"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
+  <a href="profile.html"><i data-lucide="user" style="width:18px;height:18px;"></i> My Account</a>
   <div class="mob-divider"></div>
   <a href="#" id="logoutLinkMobile"><i data-lucide="log-out" style="width:18px;height:18px;"></i> Log Out</a>
 </div>
@@ -827,7 +834,7 @@
                 Description <span class="req">*</span>
               </label>
               <textarea class="form-textarea form-input" id="contact-message" name="contact_message"
-                        placeholder="Tell us what's on your mind — the more detail you share, the faster we can help." required></textarea>
+                        placeholder="Tell us what's on your mind. The more detail you share, the faster we can help." required></textarea>
               <div class="form-error-msg" id="err-message">
                 <i data-lucide="alert-circle" style="width:13px;height:13px;"></i>
                 Please enter your message.
@@ -847,7 +854,7 @@
                   <i data-lucide="send" style="width:15px;height:15px;"></i>
                 </span>
               </button>
-              <a href="/index" class="btn btn-outline">Cancel</a>
+              <a href="index.html" class="btn btn-outline">Cancel</a>
             </div>
             <p style="font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.6;">
               By submitting this form you agree to our
@@ -873,7 +880,7 @@
           <!-- Filled by JS -->
         </div>
         <div class="success-actions">
-          <a href="/index" class="btn btn-primary">
+          <a href="index.html" class="btn btn-primary">
             Back to Home
             <span class="btn-arrow">
               <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
@@ -906,7 +913,7 @@
         <div class="info-card-title">Received &amp; Triaged</div>
         <p class="info-card-desc">
           Your message lands directly in our support queue. Each submission is read by a
-          team member and routed to the right person — no bots, no automated brush-offs.
+          team member and routed to the right person, no bots, no automated brush-offs.
         </p>
       </div>
 
@@ -927,7 +934,7 @@
         </div>
         <div class="info-card-title">Feedback Feeds the Platform</div>
         <p class="info-card-desc">
-          Every piece of feedback — critical or positive — informs our roadmap. If
+          Every piece of feedback, critical or positive, informs our roadmap. If
           something you raise leads to a change, we'll note it in our release updates.
         </p>
       </div>
@@ -970,9 +977,9 @@
       <div>
         <div class="footer-col-title">Platform</div>
         <ul class="footer-links">
-          <li><a href="/community">Cats</a></li>
+          <li><a href="community.html">Cats</a></li>
           <li><a href="report.html">Report Sighting</a></li>
-          <li><a href="/livemap">Live Map</a></li>
+          <li><a href="livemap.html">Live Map</a></li>
           <li><a href="/about">About Us</a></li>
         </ul>
       </div>
@@ -981,7 +988,7 @@
         <div class="footer-col-title">Community</div>
         <ul class="footer-links">
           <li><a href="/faq">FAQ</a></li>
-          <li><a href="/contact">Contact Us</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
         </ul>
       </div>
 
@@ -1006,18 +1013,6 @@
 </button>
 
 <!-- ── MODAL ── -->
-<div class="kisa-modal-backdrop" id="kisaModalBackdrop"></div>
-<div class="kisa-modal" id="kisaModal" role="dialog" aria-modal="true" aria-labelledby="kisaModalTitle">
-  <div class="kisa-modal-box">
-    <div class="kisa-modal-header">
-      <span class="kisa-modal-title" id="kisaModalTitle"></span>
-      <button class="kisa-modal-close" id="kisaModalClose" aria-label="Close">
-        <i data-lucide="x" style="width:16px;height:16px;"></i>
-      </button>
-    </div>
-    <div class="kisa-modal-body" id="kisaModalBody"></div>
-  </div>
-</div>
 
 <!-- ════════════════════════════════════════════════════ SCRIPTS -->
 <script>
@@ -1133,17 +1128,6 @@
     });
   })();
 
-  /* ── Logout stub ── */
-  (function () {
-    [document.getElementById('logoutLink'), document.getElementById('logoutLinkMobile')]
-      .forEach(function (el) {
-        if (!el) return;
-        el.addEventListener('click', function (e) {
-          e.preventDefault();
-          window.location.href = '/index';
-        });
-      });
-  })();
 
   /* ── Form Validation & Submission ── */
   (function () {
@@ -1245,11 +1229,55 @@
       e.preventDefault();
       if (!validate()) return;
       var typeEl = document.querySelector('input[name="msg_type"]:checked');
-      revealSuccess({
+      var btn = getEl('submitBtn');
+      var label = btn ? btn.innerHTML : '';
+
+      /* Somewhere to say it failed, just above the buttons. */
+      var errBox = getEl('contactSendError');
+      if (!errBox && btn) {
+        errBox = document.createElement('div');
+        errBox.id = 'contactSendError';
+        errBox.className = 'form-error-msg';
+        errBox.setAttribute('role', 'alert');
+        errBox.style.marginBottom = '12px';
+        var anchor = btn.closest('.form-actions') || btn;
+        anchor.parentNode.insertBefore(errBox, anchor);
+      }
+      if (errBox) errBox.classList.remove('show');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+      var msg = {
         name:    getEl('contact-name').value.trim(),
         email:   getEl('contact-email').value.trim(),
-        type:    typeEl ? typeLabel(typeEl.value) : '—',
-        subject: getEl('contact-subject').value.trim()
+        type:    typeEl ? typeEl.value : 'inquiry',
+        subject: getEl('contact-subject').value.trim(),
+        message: getEl('contact-message').value.trim()
+      };
+
+      /* This used to show the thank-you screen without storing anything, so
+         every message sent through the form was lost. */
+      var send = window.KisaStore
+        ? KisaStore.contact.send(msg)
+        : Promise.reject(new Error('Could not reach the server. Please try again.'));
+
+      send.then(function () {
+        if (btn) { btn.disabled = false; btn.innerHTML = label; }
+        revealSuccess({
+          name:    msg.name,
+          email:   msg.email,
+          type:    typeEl ? typeLabel(typeEl.value) : '-',
+          subject: msg.subject
+        });
+      }).catch(function (err) {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = label;
+          if (window.lucide) lucide.createIcons();
+        }
+        if (errBox) {
+          errBox.textContent = (err && err.message) || 'Your message could not be sent. Please try again.';
+          errBox.classList.add('show');
+        }
       });
     });
 
@@ -1313,109 +1341,8 @@
     });
   })();
 
-  /* ── Modal System ── */
-  (function () {
-    var CONTENT = {
-      privacy: {
-        title: 'Privacy Policy',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>What We Collect</h3><p>When you submit this contact form, we collect your name, email address, message type, and the content of your message. If you have an account, your submission may be linked to it.</p><h3>How We Use It</h3><p>Your message is used solely to respond to your enquiry. We do not use contact form submissions for marketing without your explicit consent.</p><h3>Retention</h3><p>Support messages are retained for up to 12 months from the date of submission, after which they are deleted unless ongoing correspondence requires otherwise.</p><h3>Your Rights</h3><p>You may request access to, correction of, or deletion of any personal data we hold about you by emailing privacy@kisa.app.</p>'
-      },
-      terms: {
-        title: 'Terms of Service',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>Use of the Platform</h3><p>By using Kisa, you agree to use the platform lawfully and in a manner that does not harm other users or community cats.</p><h3>User Content</h3><p>You retain ownership of content you submit to Kisa. By submitting content, you grant Kisa a non-exclusive, royalty-free licence to display and distribute that content within the platform.</p><h3>Governing Law</h3><p>These terms shall be governed by applicable law. For questions, contact us at support@kisa.app.</p>'
-      },
-      faq: {
-        title: 'Frequently Asked Questions',
-        html: '<p style="color:var(--text-2);margin-bottom:24px;">Got a question about Kisa? Find answers below.</p><div id="kisaFaqAccordion"></div>',
-        faqs: [
-          { q: 'What is Kisa?', a: 'Kisa is a community platform for tracking and supporting stray and community cats in your neighbourhood.' },
-          { q: 'How do I report a cat sighting?', a: 'Once signed in, click "Report a Sighting" in the navigation bar and complete the form.' },
-          { q: 'How can I get in touch with the Kisa team?', a: 'You can reach us at hello@kisa.app or by using the contact form on this page. We aim to respond within 1–2 business days.' },
-          { q: 'How do I report inappropriate content?', a: 'Use the report option on any post or comment, or contact us directly via the "Report an Issue" option on the contact form.' }
-        ]
-      },
-      cookies: {
-        title: 'Cookie Policy',
-        html: '<p class="kisa-modal-updated">Last updated: 1 July 2026</p><h3>What Are Cookies</h3><p>Cookies are small text files stored on your device when you visit a website.</p><h3>Cookies We Use</h3><ul><li><strong>Essential cookies</strong> — Required for login and core platform functionality.</li><li><strong>Analytics cookies</strong> — Help us understand how the platform is used so we can improve it.</li><li><strong>Preference cookies</strong> — Remember your display settings.</li></ul><h3>Managing Cookies</h3><p>You can control cookies through your browser settings. Disabling essential cookies will affect login functionality. For questions, contact privacy@kisa.app.</p>'
-      }
-    };
-
-    function buildFaqHtml(faqs) {
-      return faqs.map(function(item, i) {
-        return '<div class="kisa-modal-faq-item" data-faq="' + i + '">'
-          + '<button class="kisa-modal-faq-q" type="button">' + item.q
-          + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>'
-          + '</button><div class="kisa-modal-faq-a">' + item.a + '</div></div>';
-      }).join('');
-    }
-
-    function openModal(type) {
-      var data = CONTENT[type];
-      if (!data) return;
-      var modal    = document.getElementById('kisaModal');
-      var backdrop = document.getElementById('kisaModalBackdrop');
-      var title    = document.getElementById('kisaModalTitle');
-      var body     = document.getElementById('kisaModalBody');
-      title.textContent = data.title;
-      body.innerHTML    = data.html;
-      if (type === 'faq' && data.faqs) {
-        var acc = document.getElementById('kisaFaqAccordion');
-        if (acc) {
-          acc.innerHTML = buildFaqHtml(data.faqs);
-          acc.addEventListener('click', function(e) {
-            var btn = e.target.closest('.kisa-modal-faq-q');
-            if (!btn) return;
-            var item    = btn.closest('.kisa-modal-faq-item');
-            var wasOpen = item.classList.contains('open');
-            acc.querySelectorAll('.kisa-modal-faq-item').forEach(function(el) { el.classList.remove('open'); });
-            if (!wasOpen) item.classList.add('open');
-          });
-        }
-      }
-      modal.style.display    = 'flex';
-      backdrop.style.display = 'block';
-      document.body.style.overflow = 'hidden';
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          modal.classList.add('open');
-          backdrop.classList.add('open');
-          if (window.lucide) lucide.createIcons();
-        });
-      });
-      body.scrollTop = 0;
-    }
-
-    function closeModal() {
-      var modal    = document.getElementById('kisaModal');
-      var backdrop = document.getElementById('kisaModalBackdrop');
-      modal.classList.remove('open');
-      backdrop.classList.remove('open');
-      document.body.style.overflow = '';
-      setTimeout(function() {
-        modal.style.display    = 'none';
-        backdrop.style.display = 'none';
-      }, 250);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('a[href="/privacy"], a[href="/terms"], a[href="/faq"], a[href="/cookies"]').forEach(function(el) {
-        el.addEventListener('click', function(e) {
-          e.preventDefault();
-          var map = { '/privacy': 'privacy', '/terms': 'terms', '/faq': 'faq', '/cookies': 'cookies' };
-          openModal(map[el.getAttribute('href')]);
-        });
-      });
-      document.getElementById('kisaModalClose').addEventListener('click', closeModal);
-      document.getElementById('kisaModalBackdrop').addEventListener('click', closeModal);
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-      });
-    });
-
-    window.kisaOpenModal = openModal;
-  })();
 </script>
 
+<script src="assets/js/kisa-modal.js?v=2026-09-14b" defer></script>
 </body>
 </html>
-
