@@ -952,13 +952,13 @@
       .kisa-modal { align-items: flex-end; padding: 0; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14a">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14a">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14b">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-14a"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-14a"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14a" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-14a" defer></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14b" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14b" defer></script>
 </head>
 <body>
 
@@ -2000,7 +2000,7 @@
 
   /* Notification and privacy settings, stored on the profile. The privacy
      choices are enforced by the database itself, through the policies in
-     backend/contact_avatar_settings.sql, not just remembered here. */
+     backend/migrations/005_contact_avatar_settings.sql, not just remembered here. */
   function checkedById(id) {
     var el = document.getElementById(id);
     return !!(el && el.checked);
@@ -2024,7 +2024,7 @@
       .catch(function (err) {
         var msg = (err && err.message) || '';
         showToast(/setup|column|schema cache/i.test(msg)
-          ? 'Settings need one more setup step: run backend/contact_avatar_settings.sql in Supabase.'
+          ? 'Settings need one more setup step: run backend/migrations/005_contact_avatar_settings.sql in Supabase.'
           : (msg || 'Could not save your settings'));
       })
       .then(function () {
@@ -2208,6 +2208,6 @@
 
 <!-- ══ COOKIES/LEGAL POPUP INTERACTIVE HANDLERS MODAL MODULE ENGINE ══ -->
 
-<script src="assets/js/kisa-modal.js?v=2026-09-14a" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-14b" defer></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
  * posts that were the same for every visitor.
  *
  * Likes and comments hang off sightings rather than posts, because the feed
- * shows sightings. That needs the tables in backend/sighting_social.sql. If
+ * shows sightings. That needs the tables in backend/migrations/002_sighting_social.sql. If
  * they are missing the feed still renders and says so, rather than breaking.
  *
  * Every value rendered here was typed by a member of the public, so it goes
@@ -465,7 +465,7 @@
            than showing a bare Postgres error. */
         if (/sighting_likes|sighting_comments|schema cache|does not exist/i.test(msg)) {
           msg = 'The feed needs one more setup step: run '
-              + 'backend/sighting_social.sql in Supabase.';
+              + 'backend/migrations/002_sighting_social.sql in Supabase.';
         }
         var box = el('div', 'feed-status');
         box.appendChild(el('div', 'feed-status-title', 'Feed unavailable'));

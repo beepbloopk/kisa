@@ -26,9 +26,9 @@ Built for #hackthekitty 2026.
 
 Instructions -> 
 
-1. Create a virtual enviroment 
+1. Create a virtual environment
 
-cd E:\Kisa\kisa\backend
+cd backend
 python -m venv .venv
 .venv\Scripts\activate
 
@@ -36,12 +36,26 @@ python -m venv .venv
 
 pip install -r requirements.txt
 
-3. Run the server
+3. Add your keys
 
-cd E:\Kisa\kisa\backend
+Copy .env.example to .env in the backend folder and fill in the values. Never commit .env: this repository is public.
+
+4. Run the server, still inside the backend folder
+
 uvicorn app.main:app --reload
 
 **Open it on : http://127.0.0.1:8000**
+
+> Running the frontend on its own
+
+The site in frontend/ is static and talks to Supabase directly, so it needs no backend:
+
+cd frontend
+python -m http.server 5173
+
+> Database setup
+
+Run the files in backend/migrations/ in order in the Supabase SQL Editor. The README in that folder explains each one.
 
 > What's in it
 

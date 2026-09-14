@@ -196,7 +196,7 @@
 
   var Profiles = {
     /* Your own profile, every column. Other people can only read a
-       profile's public columns (see backend/contact_avatar_settings.sql),
+       profile's public columns (see backend/migrations/005_contact_avatar_settings.sql),
        and a plain select cannot reach the private ones even for you, so
        this goes through get_my_profile(). Until that function is installed
        it falls back to a plain select of every column. */
@@ -418,7 +418,7 @@
             var m = r.error.message || '';
             if (/could not find|does not exist|schema cache/i.test(m)) {
               throw new Error('This needs one more setup step: run ' +
-                              'backend/map_and_rescue.sql in Supabase.');
+                              'backend/migrations/004_map_and_rescue.sql in Supabase.');
             }
             throw fail(r.error);
           }

@@ -549,16 +549,16 @@
       .back-to-top { bottom: 24px; right: 24px; width: 44px; height: 44px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14a">
-  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14a">
+  <link rel="stylesheet" href="assets/css/kisa-modal.css?v=2026-09-14b">
+  <link rel="stylesheet" href="assets/css/kisa-ui.css?v=2026-09-14b">
   <script src="https://unpkg.com/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
-  <script src="assets/js/kisa-config.js?v=2026-09-14a"></script>
+  <script src="assets/js/kisa-config.js?v=2026-09-14b"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="assets/js/kisa-map.js?v=2026-09-14a"></script>
-  <script src="assets/js/kisa-store.js?v=2026-09-14a"></script>
-  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14a" defer></script>
-  <script src="assets/js/kisa-notifications.js?v=2026-09-14a" defer></script>
+  <script src="assets/js/kisa-map.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-store.js?v=2026-09-14b"></script>
+  <script src="assets/js/kisa-auth-ui.js?v=2026-09-14b" defer></script>
+  <script src="assets/js/kisa-notifications.js?v=2026-09-14b" defer></script>
 </head>
 <body>
 
@@ -1008,7 +1008,7 @@
       }).catch(function (err) {
         var msg = err && err.message ? err.message : 'Could not load the map.';
         if (/sightings_map|schema cache|does not exist/i.test(msg)) {
-          msg = 'The map needs one more setup step: run backend/map_and_rescue.sql in Supabase.';
+          msg = 'The map needs one more setup step: run backend/migrations/004_map_and_rescue.sql in Supabase.';
         }
         reportsSummary.textContent = msg;
         reportsEmpty.textContent = msg;
@@ -1088,6 +1088,6 @@
 
 
 
-<script src="assets/js/kisa-modal.js?v=2026-09-14a" defer></script>
+<script src="assets/js/kisa-modal.js?v=2026-09-14b" defer></script>
 </body>
 </html>

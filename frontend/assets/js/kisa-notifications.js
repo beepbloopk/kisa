@@ -2,7 +2,7 @@
  *
  * Tells you when someone likes or comments on a report you posted. The rows
  * are created by database triggers, never by the browser, so nobody can
- * forge one. See backend/notifications.sql.
+ * forge one. See backend/migrations/003_notifications.sql.
  *
  * Injects itself into .nav-right beside the account menu, on every page that
  * has one. Load after kisa-store.js and kisa-auth-ui.js.
@@ -161,7 +161,7 @@
       }).catch(function (err) {
         ui.list.innerHTML = '';
         var msg = /notifications|schema cache|does not exist/i.test(err.message || '')
-          ? 'Notifications need one more setup step: run backend/notifications.sql in Supabase.'
+          ? 'Notifications need one more setup step: run backend/migrations/003_notifications.sql in Supabase.'
           : (err.message || 'Could not load notifications.');
         ui.list.appendChild(el('div', 'kisa-notif-empty', msg));
       });
